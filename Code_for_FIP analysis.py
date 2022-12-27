@@ -1,7 +1,5 @@
-import sys
 import tkinter as tk
 from tkinter import filedialog
-import pathlib
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,8 +8,6 @@ import tdt
 import re
 import math
 from sklearn.metrics import auc 
-from itertools import zip_longest
-import csv
 
 def browse_directory():
     
@@ -24,204 +20,343 @@ def browse_directory():
     Text_path.insert(0, f"{folder_selected}")
     path_to_experiment = Text_path.get()
     
-def show_parameters_import():
+def AUC_analysis():
+    
+    """This function enables the user to use AUC analysis, and 
+    insert the settings for this type of analysis"""
+     
+    global AUC_pre_1
+    global AUC_pre_2
+    global AUC_post_1
+    global AUC_post_2
+
+    ### Creating AUC time range entry boxes
+    AUC_pre_1 = tk.Entry(mGui)
+    AUC_pre_2 = tk.Entry(mGui)
+    AUC_post_1 = tk.Entry(mGui)
+    AUC_post_2 = tk.Entry(mGui)
+
+    ### Creating AUC labels
+    AUC_to_label_1 = tk.Label(mGui, text="to", font=("Arial", 10))
+    AUC_to_label_2 = tk.Label(mGui, text="to", font=("Arial", 10))     
+
+    ### Placing all labels and boxes
+    AUC_pre_1.place(relx=0.40, rely=0.54, relwidth=0.05, relheight=0.04)
+    AUC_pre_2.place(relx=0.50, rely=0.54, relwidth=0.05, relheight=0.04)
+    AUC_post_1.place(relx=0.65, rely=0.54, relwidth=0.05, relheight=0.04)
+    AUC_post_2.place(relx=0.75, rely=0.54, relwidth=0.05, relheight=0.04)
+    AUC_to_label_1.place(relx=0.46, rely=0.54, relwidth=0.03, relheight=0.04)
+    AUC_to_label_2.place(relx=0.71, rely=0.54, relwidth=0.03, relheight=0.04)
+    
+def Zex_analysis():
+    
+    """This function enables the user to use z-extreme analysis, and 
+    insert the settings for this type of analysis"""
+
+    global zex_pre_1
+    global zex_pre_2
+    global zex_post_1
+    global zex_post_2
+    global Z_max
+    global Z_min
+    
+    ### Creating Z-extreme time range entry boxes
+    zex_pre_1 = tk.Entry(mGui)
+    zex_pre_2 = tk.Entry(mGui)
+    zex_post_1 = tk.Entry(mGui)
+    zex_post_2 = tk.Entry(mGui)
+
+    ### Creating labels
+    zex_to_label_1 = tk.Label(mGui, text="to", font=("Arial", 10))      
+    zex_to_label_2 = tk.Label(mGui, text="to", font=("Arial", 10))
+
+    z_max_or_min_label = tk.Label(mGui, text="Calculate Z-max or Z-min?", font=("Arial", 10), anchor="w")
+    z_max_or_min_label.place(relx=0.03, rely=0.72, relwidth=0.31, relheight=0.04)    
+
+
+    ### Creating Boolean variables for check boxes.
+    Z_max = tk.BooleanVar()
+    Z_min = tk.BooleanVar()
+    
+    ### Creating Z-min checkbox
+    Checkbox_Z_min = tk.Checkbutton(mGui, 
+                                  text = "Z-min",
+                                  variable = Z_min,
+                                  onvalue=True,
+                                  offvalue=False)
+    
+    ### Creating Z-max checkbox
+    Checkbox_Z_max = tk.Checkbutton(mGui, 
+                                  text = "Z-max",
+                                  variable = Z_max,
+                                  onvalue=True,
+                                  offvalue=False)
+
+    ### Placing entry boxes, check boxes and labels
+    zex_pre_1.place(relx=0.40, rely=0.64, relwidth=0.05, relheight=0.04)
+    zex_pre_2.place(relx=0.50, rely=0.64, relwidth=0.05, relheight=0.04)
+    zex_post_1.place(relx=0.65, rely=0.64, relwidth=0.05, relheight=0.04)
+    zex_post_2.place(relx=0.75, rely=0.64, relwidth=0.05, relheight=0.04)
+    zex_to_label_2.place(relx=0.71, rely=0.64, relwidth=0.03, relheight=0.04)
+    zex_to_label_1.place(relx=0.46, rely=0.64, relwidth=0.03, relheight=0.04)
+    Checkbox_Z_min.place(relx=0.365, rely=0.72, relwidth=0.30, relheight=0.06)
+    Checkbox_Z_max.place(relx=0.62, rely=0.72, relwidth=0.30, relheight=0.06)
+    
+def average_z_score():
+   
+    """This function enables the user to use average Z-score analysis, and 
+    insert the settings for this type of analysis"""             
+
+    global avg_pre_1
+    global avg_pre_2
+    global avg_post_1
+    global avg_post_2
+
+    ### Creating Average Z-score time range entry boxes
+    avg_pre_1 = tk.Entry(mGui)
+    avg_pre_2 = tk.Entry(mGui)
+    avg_post_1 = tk.Entry(mGui)
+    avg_post_2 = tk.Entry(mGui)
+ 
+    ### Creating labels
+    avg_to_label_1 = tk.Label(mGui, text="to", font=("Arial", 10))
+    avg_to_label_2 = tk.Label(mGui, text="to", font=("Arial", 10))
+        
+    ### Placing entry boxes and labels        
+    avg_to_label_1.place(relx=0.45, rely=0.81, relwidth=0.05, relheight=0.04)
+    avg_post_1.place(relx=0.65, rely=0.81, relwidth=0.05, relheight=0.04)
+    avg_post_2.place(relx=0.75, rely=0.81, relwidth=0.05, relheight=0.04)
+    avg_to_label_2.place(relx=0.70, rely=0.81, relwidth=0.05, relheight=0.04)    
+    avg_pre_1.place(relx=0.40, rely=0.81, relwidth=0.05, relheight=0.04)
+    avg_pre_2.place(relx=0.50, rely=0.81, relwidth=0.05, relheight=0.04)    
+    
+def Peri_event_analysis():
     
     """This function allows the user to import behavioral
     timestamps and perform perievent analysis. Options for statistical
-    analysis of perievent neuronal activity will be displayed with the execution
-    of this function"""
-    
-    
-    def AUC_analysis():
-        
-        """This function enables the user to use AUC analysis, and 
-        insert the settings for this type of analysis"""
-          
-        global AUC_pre_1
-        global AUC_pre_2
-        global AUC_post_1
-        global AUC_post_2
-
-        AUC_pre_1 = tk.Entry(mGui)
-        AUC_pre_2 = tk.Entry(mGui)
-        AUC_pre_1.place(relx=0.40, rely=0.54, relwidth=0.05, relheight=0.04)
-        AUC_pre_2.place(relx=0.50, rely=0.54, relwidth=0.05, relheight=0.04)
-        AUC_to_label_1 = tk.Label(mGui, text="to", font=("Arial", 10))
-        AUC_to_label_1.place(relx=0.46, rely=0.54, relwidth=0.03, relheight=0.04)
-        AUC_to_label_2 = tk.Label(mGui, text="to", font=("Arial", 10))
-        AUC_to_label_2.place(relx=0.71, rely=0.54, relwidth=0.03, relheight=0.04)
-        AUC_post_1 = tk.Entry(mGui)
-        AUC_post_2 = tk.Entry(mGui)
-        AUC_post_1.place(relx=0.65, rely=0.54, relwidth=0.05, relheight=0.04)
-        AUC_post_2.place(relx=0.75, rely=0.54, relwidth=0.05, relheight=0.04)
-        
-    def Zex_analysis():
-        
-        """This function enables the user to use z-extreme analysis, and 
-        insert the settings for this type of analysis"""
-
-        global zex_pre_1
-        global zex_pre_2
-        global zex_post_1
-        global zex_post_2
-        global Z_max
-        global Z_min
-        
-        zex_pre_1 = tk.Entry(mGui)
-        zex_pre_2 = tk.Entry(mGui)
-        zex_pre_1.place(relx=0.40, rely=0.64, relwidth=0.05, relheight=0.04)
-        zex_pre_2.place(relx=0.50, rely=0.64, relwidth=0.05, relheight=0.04)
-        zex_to_label_1 = tk.Label(mGui, text="to", font=("Arial", 10))
-        zex_to_label_1.place(relx=0.46, rely=0.64, relwidth=0.03, relheight=0.04)
-        zex_post_1 = tk.Entry(mGui)
-        zex_post_2 = tk.Entry(mGui)
-        zex_post_1.place(relx=0.65, rely=0.64, relwidth=0.05, relheight=0.04)
-        zex_post_2.place(relx=0.75, rely=0.64, relwidth=0.05, relheight=0.04)
-        zex_to_label_2 = tk.Label(mGui, text="to", font=("Arial", 10))
-        zex_to_label_2.place(relx=0.71, rely=0.64, relwidth=0.03, relheight=0.04)
-        z_max_or_min_label = tk.Label(mGui, text="Calculate Z-max or Z-min?", font=("Arial", 10), anchor="w")
-        z_max_or_min_label.place(relx=0.03, rely=0.72, relwidth=0.31, relheight=0.04)    
-        Z_max = tk.BooleanVar()
-        Z_min = tk.BooleanVar()
-        Checkbox_Z_min = tk.Checkbutton(mGui, 
-                                      text = "Z-min",
-                                      variable = Z_min,
-                                      onvalue=True,
-                                      offvalue=False)
-        Checkbox_Z_min.place(relx=0.365, rely=0.72, relwidth=0.30, relheight=0.06)
-        Checkbox_Z_max = tk.Checkbutton(mGui, 
-                                      text = "Z-max",
-                                      variable = Z_max,
-                                      onvalue=True,
-                                      offvalue=False)
-        Checkbox_Z_max.place(relx=0.62, rely=0.72, relwidth=0.30, relheight=0.06)
-        
-    def average_z_score():
-       
-        """This function enables the user to use average Z-score analysis, and 
-        insert the settings for this type of analysis"""             
-
-        global avg_pre_1
-        global avg_pre_2
-        global avg_post_1
-        global avg_post_2
-    
-        avg_pre_1 = tk.Entry(mGui)
-        avg_pre_2 = tk.Entry(mGui)
-        avg_pre_1.place(relx=0.40, rely=0.81, relwidth=0.05, relheight=0.04)
-        avg_pre_2.place(relx=0.50, rely=0.81, relwidth=0.05, relheight=0.04)
-        avg_to_label_1 = tk.Label(mGui, text="to", font=("Arial", 10))
-        avg_to_label_1.place(relx=0.45, rely=0.81, relwidth=0.05, relheight=0.04)
-        avg_post_1 = tk.Entry(mGui)
-        avg_post_2 = tk.Entry(mGui)
-        avg_post_1.place(relx=0.65, rely=0.81, relwidth=0.05, relheight=0.04)
-        avg_post_2.place(relx=0.75, rely=0.81, relwidth=0.05, relheight=0.04)
-        avg_to_label_2 = tk.Label(mGui, text="to", font=("Arial", 10))
-        avg_to_label_2.place(relx=0.70, rely=0.81, relwidth=0.05, relheight=0.04)    
-    
-
-    global AUC_analysis_bool
-    global Zex_analysis_bool
-    global Average_analysis_bool
-    global Range_pre
-    global Range_post
-    global base_pre
-    global base_post
-    global Stimuli
+    analysis of perievent neuronal activity will also be displayed upon the execution
+    of this function. The function is executed when the use timestamps? checkbox is filled in."""
      
-    Stimuli = tk.Entry(mGui)
-    Stimuli.place(relx=0.57, rely=0.12, relwidth=0.28, relheight=0.04)  
+    ### This is all the variables that will be exported from this function
+    global AUC_analysis_entry
+    global Zex_analysis_entry
+    global Average_analysis_entry
+    global Range_pre_entry
+    global Range_post_entry
+    global base_pre_entry
+    global base_post_entry
+    global Stimuli_entry
+    global SEM_entry
+    global std_entry
+     
+    ### Generating entry boxes for stimuli, range and baseline time range
+    Stimuli_entry = tk.Entry(mGui)
+    Stimuli_entry.place(relx=0.57, rely=0.12, relwidth=0.28, relheight=0.04)  
+    Range_pre_entry = tk.Entry(mGui)
+    Range_post_entry = tk.Entry(mGui)
+    base_pre_entry = tk.Entry(mGui)
+    base_post_entry = tk.Entry(mGui)
+    
+    ### Creating labels
     label_Stimuli = tk.Label(mGui, text="Enter stimuli here:", font=("Arial", 10), anchor="e")
-    label_Stimuli.place(relx=0.35, rely=0.12, relwidth=0.22, relheight=0.04)
     Range_label = tk.Label(mGui, text="Enter range to extract here:", font=("Arial", 10), anchor="w")   
-    Range_label.place(relx=0.35, rely=0.18, relwidth=0.34, relheight=0.04)
     Range_to_label = tk.Label(mGui, text="to", font=("Arial", 10))
-    Range_to_label.place(relx=0.76, rely=0.18, relwidth=0.03, relheight=0.04)  
-    Range_pre = tk.Entry(mGui)
-    Range_post = tk.Entry(mGui)
-    Range_pre.place(relx=0.69, rely=0.18, relwidth=0.05, relheight=0.04)
-    Range_post.place(relx=0.81, rely=0.18, relwidth=0.05, relheight=0.04)
-    base_pre = tk.Entry(mGui)
-    base_post = tk.Entry(mGui)
-    base_pre.place(relx=0.69, rely=0.24, relwidth=0.05, relheight=0.04)
-    base_post.place(relx=0.81, rely=0.24, relwidth=0.05, relheight=0.04)
-    base_label = tk.Label(mGui, text="Enter baseline time:",font=("Arial", 10), anchor="w")
-    base_label.place(relx=0.35, rely=0.24, relwidth=0.34, relheight=0.04)
     base_to_label = tk.Label(mGui, text="to", font=("Arial", 10))
-    base_to_label.place(relx=0.76, rely=0.24, relwidth=0.03, relheight=0.04)
+    std_or_SEM_label = tk.Label(mGui, text="Display error as std or SEM?",font=("Arial", 10), anchor="w" )
+    base_label = tk.Label(mGui, text="Enter baseline time:",font=("Arial", 10), anchor="w")
     Pre_label = tk.Label(mGui, text="Pre", font=("Arial", 11))    
     Post_label = tk.Label(mGui, text="Post", font=("Arial", 11))
-    Pre_label.place(relx=0.425, rely=0.49, relwidth=0.10, relheight=0.04)
-    Post_label.place(relx=0.675, rely=0.49, relwidth=0.10, relheight=0.04)
-      
-      
-    # Statistical analysis title
     Stat_section_title = tk.Label(mGui, text="Parameters for statistical analysis", font=("Arial", 13, "bold"))
-    Stat_section_title.place(relx=0.2, rely=0.42, relwidth=0.55, relheight=0.04)
     
-    ### Setting Boolean variable for statistical measure checkboxes
-    AUC_analysis_bool = tk.BooleanVar()
-    Zex_analysis_bool = tk.BooleanVar()
-    Average_analysis_bool = tk.BooleanVar()
+    ### Creating BooleanVar for what type of error and statistical measure to calculate
+    std_entry = tk.BooleanVar()
+    SEM_entry = tk.BooleanVar()
+    AUC_analysis_entry = tk.BooleanVar()
+    Zex_analysis_entry = tk.BooleanVar()
+    Average_analysis_entry = tk.BooleanVar()
 
+    ### Creating checkbox for standard deviation
+    Checkbox_std = tk.Checkbutton(mGui,
+                                   variable = std_entry,
+                                   text="std",
+                                   onvalue=True,
+                                   offvalue=False)
+    
+    ### Creating checkbox for standard error of the mean
+    Checkbox_SEM = tk.Checkbutton(mGui,
+                                   variable = SEM_entry,
+                                   text="SEM",
+                                   onvalue=True,
+                                   offvalue=False)
+    
     ### Checkboxes for statistical measures
+    ### Filling in one of these checkboxes will activate a function
+    ### which will tell the code that we are using this statistical measure and 
+    ### also allow us the fill in the time ranges from where in the peri event the
+    ### AUC-values will be extracted from. 
+    
     Checkbox_AUC = tk.Checkbutton(mGui, 
                                    text = "Use Area under curve?",
                                    command=AUC_analysis, 
-                                   variable=AUC_analysis_bool,
+                                   variable=AUC_analysis_entry,
                                    onvalue=True,
                                    offvalue=False)
  
     Checkbox_zex = tk.Checkbutton(mGui,
                                   text = "Use Z-extreme?           ",
                                   command=Zex_analysis,
-                                  variable=Zex_analysis_bool,
+                                  variable=Zex_analysis_entry,
                                   onvalue=True,
                                   offvalue=False)
                                 
     Checkbox_average_z_score = tk.Checkbutton(mGui,  
                                               text = "Use Z-score average? ",
                                               command=average_z_score,
-                                              variable=Average_analysis_bool,
+                                              variable=Average_analysis_entry,
                                               onvalue=True,
                                               offvalue=False)
     
+    ### Placing labels, entry boxes and check boxes
+    Checkbox_std = Checkbox_std.place(relx=0.35, rely=0.35, relwidth=0.20, relheight=0.06) 
+    Checkbox_SEM = Checkbox_SEM.place(relx=0.50, rely=0.35, relwidth=0.20, relheight=0.06)
+    label_Stimuli.place(relx=0.35, rely=0.12, relwidth=0.22, relheight=0.04)
+    Range_to_label.place(relx=0.76, rely=0.18, relwidth=0.03, relheight=0.04)  
+    Range_label.place(relx=0.35, rely=0.18, relwidth=0.34, relheight=0.04)    
+    Range_pre_entry.place(relx=0.69, rely=0.18, relwidth=0.05, relheight=0.04)
+    Range_post_entry.place(relx=0.81, rely=0.18, relwidth=0.05, relheight=0.04)
+    base_pre_entry.place(relx=0.69, rely=0.24, relwidth=0.05, relheight=0.04)
+    base_post_entry.place(relx=0.81, rely=0.24, relwidth=0.05, relheight=0.04)
+    base_label.place(relx=0.35, rely=0.24, relwidth=0.34, relheight=0.04)
+    base_to_label.place(relx=0.76, rely=0.24, relwidth=0.03, relheight=0.04)
+    std_or_SEM_label.place(relx=0.35, rely=0.30, relwidth=0.36, relheight=0.04)
+    Pre_label.place(relx=0.425, rely=0.49, relwidth=0.10, relheight=0.04)
+    Post_label.place(relx=0.675, rely=0.49, relwidth=0.10, relheight=0.04)
+    Stat_section_title.place(relx=0.2, rely=0.42, relwidth=0.55, relheight=0.04)    
     Checkbox_AUC.place(relx=0.05, rely=0.53, relwidth=0.30, relheight=0.06)
     Checkbox_zex.place(relx=0.05, rely=0.63, relwidth=0.30, relheight=0.06)
     Checkbox_average_z_score.place(relx=0.05, rely=0.80, relwidth=0.30, relheight=0.06)
     
-    
 def assign():
     
+    ### This checks whether the experiment path haven´t been filled in, 
+    ### and raises an error if true. 
+    if len(path_to_experiment) == 0:
+            tk.messagebox.showerror(title = "Error", message = "No experiment path have been chosen, please press the browse experiment path button and choose one")
+            raise Exception("No experiment path have been chosen, please press the browse experiment path button and choose one")
+    
+    ### This extracts the Timestamp_import_bool value, i.e., gets the boolean value
+    ### that checks if peri event analysis should be done or not.<
     global Timestamp_import_bool
     Timestamp_import_bool = Timestamp_import.get()
        
     if Timestamp_import_bool:
         
-        global Range_pre
-        global Range_post
-        global base_pre
+        ### These variables will be exported from this function and used in the code after mainloop, i.e., after the gui has been terminated. 
         global Range
-        global base_post
         global Stimuli
         global Baseline
         global AUC_analysis_bool
         global Zex_analysis_bool
         global Average_analysis_bool
+        global std_bool
+        global SEM_bool    
         
-         
-        base_pre = float(base_pre.get())
-        base_post = float(base_post.get()) 
-        Baseline = (base_pre, base_post)
+        ### These initial if conditions will check that the extraction range, baseline range, error boxes and statistical measure boxes
+        ### have been filled in correctly.
         
-        Stimuli = Stimuli.get()
-        Range_pre = float(Range_pre.get())
-        Range_post = float(Range_post.get())
+        ### This checks whether stimuli entry box is empty and raises an error if true. 
+        if len(Stimuli_entry.get()) == 0:       
+            tk.messagebox.showerror(title = "Error", message = "The stimuli box was left empty, please fill it in")
+            raise Exception("The stimuli box was left empty, please fill it in")
+        
+        ### This checks whether there is atleast one entry box in the range extraction and baseline time range that is empty, 
+        ### and raises an error if true.  
+        if len(Range_pre_entry.get()) == 0 or len(Range_post_entry.get()) == 0 or len(base_pre_entry.get()) == 0 or len(base_post_entry.get()) == 0:           
+            tk.messagebox.showerror(title = "Error", message = "One of the boxes in the range extraction limit or baseline limit were not filled in, fill in all boxes")
+            raise Exception("One of the boxes in the range extraction limit or baseline limit were not filled in, fill in all boxes")
+        
+        
+        ### This checks if both error type check boxes are filled in, and raises an error if true. 
+        if std_entry.get() and SEM_entry.get():
+            tk.messagebox.showerror(title = "Error", message = "both std and SEM chosen, only choose one")
+            raise Exception("both std and SEM chosen, only choose one")
+        
+        ### This checks if both error type checkboxes are left empty, and raises an error if true.
+        if std_entry.get() is False and SEM_entry.get() is False:
+            tk.messagebox.showerror(title = "Error", message = "Neither std and SEM chosen, choose one")
+            raise Exception("Neither std and SEM chosen,choose one")
+        
+        ### This checks if all checkboxes for the statistical measure types are left empty, and raises an error if true.
+        if AUC_analysis_entry.get() is False and Zex_analysis_entry.get() is False and Average_analysis_entry.get() is False:
+            tk.messagebox.showerror(title = "Error", message = "No statistical measure option were chosen, chose atleast one.")
+            raise Exception("No statistical measure option were chosen, choose atleast one.")
+        
+        ### This checks if the start time of the total range extraction range higher than 0 (i.e., extraction time range start after the behavioral event) and throws an error if true.
+        if float(Range_pre_entry.get()) > 0:
+            tk.messagebox.showerror(title = "Error", message = "The start point time point of the range extraction time range needs to be less than 0.")
+            raise Exception("The start point time point of the range extraction time range needs to be less than 0.")    
+        
+        ### This checks if the end time of the total range extraction range is lower than 0 (i.e., extraction time range end before the behavioral event) and throws an error if true.    
+        if float(Range_post_entry.get()) < 0:
+            tk.messagebox.showerror(title = "Error", message = "The end point time point of the range extraction time range needs to be higher than 0.")
+            raise Exception("The end point time point of the range extraction time range needs to be higher than 0.")
+            
+        ### This checks whether the baseline start time is lower than the total range extraction start time (i.e., baseline to be used to normalize peri event includes data outside the peri event range),
+        ### and throws an error if true.
+        if float(Range_pre_entry.get()) > float(base_pre_entry.get()):
+            tk.messagebox.showerror(title = "Error", message = "The start time point of the baseline is outside of the extraction time range")
+            raise Exception("The start time point of the baseline is outside of the extraction time range")
+        
+        ### This checks whether the baseline end time is higher than the total range extraction end time (i.e., baseline to be used to normalize peri event includes data outside the peri event range),
+        ### and throws an error if true. 
+        if float(Range_post_entry.get()) < float(base_post_entry.get()):
+            tk.messagebox.showerror(title = "Error", message = "The end time point of the baseline is outside of the extraction time range")
+            raise Exception("The end time point of the baseline is outside of the extraction time range")
+        
+        ### This checks whether the start time of the baseline is higher than the end time of the baseline, and raises an error if true. 
+        if float(base_pre_entry.get()) > float(base_post_entry.get()):
+            tk.messagebox.showerror(title = "Error", message = "The end time point of the baseline is lower than the baseline start time point")
+            raise Exception("The end time point of the baseline is lower than the baseline start timepoint")
+                  
+        ### If all the conditions for the range extraction time limit, baseline time limit, error type and statistical measure type inputs are
+        ### met, the code below will extract the values using .get()
+        
+        base_pre = float(base_pre_entry.get())
+        base_post = float(base_post_entry.get()) 
+        Baseline = (base_pre, base_post)       
+        Stimuli = Stimuli_entry.get()
+        Range_pre = float(Range_pre_entry.get())
+        Range_post = float(Range_post_entry.get())
         Range = (Range_pre, Range_post)      
-
-        AUC_analysis_bool = AUC_analysis_bool.get()
-        Zex_analysis_bool = Zex_analysis_bool.get()
-        Average_analysis_bool = Average_analysis_bool.get()
+        AUC_analysis_bool = AUC_analysis_entry.get()
+        Zex_analysis_bool = Zex_analysis_entry.get()
+        Average_analysis_bool = Average_analysis_entry.get()
+        std_bool = std_entry.get()
+        SEM_bool = SEM_entry.get()
+        
+        ### The following code will deal with checking if an statistical measure is selected, checking if the input is acceptable, and 
+        ### lastly extracting the values using .get(). Since the code is modular and repeated for each statistical measure type,'
+        ### the structure of the code will be explained in the below segment. 
+        
+        ### Structure of the code for the statistical measures 
+        
+        ### 1. Checking if the statistical measure type is selected. This is done by checking if the boolean variable connected to the 
+        ### specific statistical measure checkbox (e.g., AUC_analysis_bool) is True or False. If true, then the code within the if statement
+        ### will be run. 
+        
+        ### 2. The variables that will be extracted from this section of the function are specified. Since they will be exported from the 
+        ### function, they are assigned as global. 
+        
+        ### 3. Conditions are applied that checks whether the input into the statistical measure entry boxes are correct. 
+        ### For each statistical measure, five conditions are applied. 
+            ### 3.1 if any entry box is empty, an error is raised. 
+            ### 3.2 If the start time of the pre time range is higher than the end time of the pre time range, an error is raised.
+            ### 3.3 If the start time of the post time range is higher than the end time of the post time range an error is raised.
+            ### 3.4 If the end time of the post time range is lower than the start time of the pre time range, an error is raised.
+            ### 3.5 If the start time of the pre time range is lower than the start time of the start total extraction range, an error is raised.
+            ### 3.6 If the end time of the post time range is higher than the end time of the end total extraction range, an error is raised.
+        
+        ### 4. If the conditions are met, the values are extracted using .get()
         
         if AUC_analysis_bool:
             
@@ -229,6 +364,30 @@ def assign():
             global AUC_pre_2
             global AUC_post_1
             global AUC_post_2  
+                      
+            if len(AUC_pre_1.get()) == 0 or len(AUC_pre_2.get()) == 0 or len(AUC_post_1.get()) == 0 or len(AUC_post_2.get()) == 0:
+                tk.messagebox.showerror(title = "Error", message = "Atleast one of the boxes in the AUC time range is empty, please fill in all boxes.")
+                raise Exception("Atleast one of the boxes in the AUC time range is empty, please fill in all boxes.")
+            
+            if float(AUC_pre_1.get()) > float(AUC_pre_2.get()):
+                tk.messagebox.showerror(title = "Error", message = "The start time point of the AUC pre time range is higher than the pre AUC end time point")
+                raise Exception("The start time point of the AUC pre time range is higher than the pre AUC end time point")
+            
+            if float(AUC_post_1.get()) > float(AUC_post_2.get()):
+                tk.messagebox.showerror(title = "Error", message = "The start time point of the AUC post time range is lower than the post AUC end time point")
+                raise Exception("The start time point of the AUC post time range is higher than the post AUC end time point")
+            
+            if float(AUC_post_2.get()) < float(AUC_pre_1.get()):
+                tk.messagebox.showerror(title = "Error", message = "The start timepoint of the AUC pre time range is higher than the post AUC end time point")
+                raise Exception("The start timepoint of the AUC pre time range is higher than the post AUC end time point")
+            
+            if float(AUC_pre_1.get()) < Range_pre:
+                tk.messagebox.showerror(title = "Error", message = "The start time point of the AUC pre time range is lower than the pre extraction start time point")
+                raise Exception("The start time point of the AUC pre time range is lower than the pre extraction start time point")
+             
+            if float(AUC_post_2.get()) > Range_post:
+                tk.messagebox.showerror(title = "Error", message = "The end time point of the AUC post time range is higher than the extraction end time point")
+                raise Exception("The end time point of the AUC post time range is higher than the extraction end time point")
             
             AUC_pre_1 = float(AUC_pre_1.get())
             AUC_pre_2 = float(AUC_pre_2.get())
@@ -244,6 +403,38 @@ def assign():
             global Z_max_bool
             global Z_min_bool
             
+            if len(zex_pre_1.get()) == 0 or len(zex_pre_2.get()) == 0 or len(zex_post_1.get()) == 0 or len(zex_post_2.get()) == 0:
+                tk.messagebox.showerror(title = "Error", message = "Atleast one of the boxes in the Z-extreme time range is empty, please fill in all boxes.")
+                raise Exception("Atleast one of the boxes in the AUC time range is empty, please fill in all boxes.")
+            
+            if float(zex_pre_1.get()) > float(zex_pre_2.get()):
+                tk.messagebox.showerror(title = "Error", message = "The start time point of the Z-extreme pre time range is higher than the pre Z-extreme end timepoint")
+                raise Exception("The start time point of the Z-extreme pre time range is higher than the pre Z-extreme end timepoint")    
+            
+            if float(zex_post_1.get()) > float(zex_post_2.get()):
+                tk.messagebox.showerror(title = "Error", message = "The start time point of the Z-extreme post time range is higher than the post Z-extreme end timepoint")
+                raise Exception("The start time point of the Z-extreme post time range is lower than the post Z-extreme end time point")
+            
+            if float(zex_post_2.get()) < float(zex_pre_1.get()):
+                tk.messagebox.showerror(title = "Error", message = "The start timepoint of the Z-extreme pre time range is higher than the post Z-extreme end timepoint")
+                raise Exception("The start timepoint of the Z-extreme pre time range is higher than the post Z-extreme end timepoint")          
+            
+            if float(zex_pre_1.get()) < Range_pre:
+                tk.messagebox.showerror(title = "Error", message = "The start time point of the Z-extreme pre time range is lower than the extraction start timepoint")
+                raise Exception("The start time point of the Z-extreme pre time range is lower than the extraction start time point")
+            
+            if float(zex_post_2.get()) > Range_post:
+                tk.messagebox.showerror(title = "Error", message = "The end time point of the Z-extreme post time range is higher than extraction end timepoint")
+                raise Exception("The end time point of the Z-extreme post time range is higher than extraction end time point")    
+               
+            if Z_max.get() and Z_min.get():
+                tk.messagebox.showerror(title = "Error", message = "both Z-max and Z-min chosen, only choose one")
+                raise Exception("both Z-max and Z-min chosen, only chose one")
+            
+            if Z_max.get() is False and Z_min.get() is False:
+                tk.messagebox.showerror(title = "Error", message = "Neither Z-max and Z-min options chosen, choose one")
+                raise Exception("Neither Z-max and Z-min options were chosen, choose one")
+            
             zex_pre_1 = float(zex_pre_1.get())
             zex_pre_2 = float(zex_pre_2.get())
             zex_post_1 = float(zex_post_1.get())
@@ -258,127 +449,89 @@ def assign():
             global avg_post_1
             global avg_post_2
             
+            if len(avg_pre_1.get()) == 0 or len(avg_pre_2.get()) == 0 or len(avg_post_1.get()) == 0 or len(avg_post_2.get()) == 0:
+                tk.messagebox.showerror(title = "Error", message = "Atleast one of the boxes in the Average Z-score time range is empty, please fill in all boxes.")
+                raise Exception("Atleast one of the boxes in the AUC time range is empty, please fill in all boxes.")
+                
+            if float(avg_pre_1.get()) > float(avg_pre_2.get()):
+                tk.messagebox.showerror(title = "Error", message = "The start time point of the Average Z-score pre time range is higher than the Average Z-score end timepoint")
+                raise Exception("The start time point of the Average Z-score pre time range is higher than the pre Average Z-score end timepoint")
+            
+            if float(avg_post_1.get()) > float(avg_post_2.get()):
+                tk.messagebox.showerror(title = "Error", message = "The start time point of the Average Z-score post time range is lower than the post Z-extreme end timepoint")
+                raise Exception("The start time point of the Average Z-score post time range is lower than the post Average Z-score end timepoint")
+            
+            if float(avg_post_2.get()) < float(avg_pre_1.get()):
+                tk.messagebox.showerror(title = "Error", message = "The start timepoint of the Average Z-score pre time range is higher than the post Average Z-score end timepoint")
+                raise Exception("The start timepoint of the Average Z-score pre time range is higher than the post Average Z-score end timepoint")
+            
+            if float(avg_pre_1.get()) < Range_pre:
+                tk.messagebox.showerror(title = "Error", message = "The start time point of the Average Z-score pre time range is lower than the extraction start timepoint")
+                raise Exception("The start time point of the Average Z-score pre time range is lower than the extraction start timepoint")
+            
+            if float(avg_post_2.get()) > Range_post:
+                tk.messagebox.showerror(title = "Error", message = "The end time point of the Average Z-score post time range is higher than extraction end timepoint")
+                raise Exception("The end time point of the Average Z-score post time range is higher than extraction end timepoint")    
+            
             avg_pre_1 = float(avg_pre_1.get())
             avg_pre_2 = float(avg_pre_2.get())
             avg_post_1 = float(avg_post_1.get())
             avg_post_2 = float(avg_post_2.get())
-             
-            
-    mGui.destroy()
     
+    ### If this point is reached, i.e. the "Click here to finish" button has been clicked 
+    ### and no errors have been raised (all inputted data is correct) the GUI will be
+    ### closed (mGui.destroy) and the loop will be broken (mGui.quit()). This
+    ### will allow for the code below the mGui.mainloop() to be run.
+    mGui.destroy()       
+    mGui.quit()
+    
+### Initializing GUI.
 mGui = tk.Tk()
-
-global Timestamp_import ### Make the variable upon clicking or not clicking checkbox global
 
 ### Objects shown before clicking any checkbox
 mGui.geometry("500x500+500+300")
 mGui.title("Choosing parameters for FIP analysis")
+
+### Creating entry box for path.
 Text_path = tk.Entry(mGui)
 Text_path.place(relx=0.47, rely=0.01, relwidth=0.4, relheight=0.05)
-browse_Button = tk.Button(
-    mGui, 
-    text="Click here to import experiment PATH:", 
-    command=browse_directory)
 
-
-browse_Button.place(relx=0.0, rely=0.01, relwidth=0.45, relheight=0.05)
+### Creating browse and exit button
+browse_Button = tk.Button(mGui, text="Click here to import experiment PATH:", command=browse_directory)
 Exit_Button = tk.Button(mGui, text="Click here to finish", command=assign)
-Exit_Button.place(relx=0.35, rely=0.95, relwidth=0.3, relheight=0.05)
 
+### Creating Boolean variable for whether we should import timestamps and perform peri event analysis or not
 Timestamp_import = tk.BooleanVar()
 
+### Creating checkbox for timestamp importation
 Checkbox_timestamps = tk.Checkbutton(mGui, 
                                      text = "Use timestamps?",
-                                     command=show_parameters_import,
+                                     command=Peri_event_analysis,
                                      variable=Timestamp_import,
                                      onvalue=True,
                                      offvalue=False)
 
+### Placing buttons and checkboxes
+browse_Button.place(relx=0.0, rely=0.01, relwidth=0.45, relheight=0.05)
+Exit_Button.place(relx=0.35, rely=0.95, relwidth=0.3, relheight=0.05)
 Checkbox_timestamps.place(relx=0.05, rely=0.11, relwidth=0.25, relheight=0.06)
 
-
+### Blocking code after .mainloop until mGui has been destroyed and quitted
 mGui.mainloop()
 
-### Conditions to check
-if Timestamp_import_bool:
-    
-    ### This checks it so that the time range of the range extraction is correct.
-    if Range_pre > 0:
-        raise Exception("The start point time point of the range extraction time range needs to be less than 0.")
-        
-    if Range_post < 0:
-        raise Exception("The end point time point of the range extraction time range needs to be higher than 0.")
-    
-    ### This checks that the baseline is within the range
-    if Range_pre > base_pre:
-        raise Exception("The start time point of the baseline is outside of the extraction time range")
-    
-    if Range_post < base_post:
-        raise Exception("The end time point of the baseline is outside of the extraction time range")
-    
-    if base_pre > base_post:
-        raise Exception("The end time point of the baseline is lower than the baseline start timepoint")
-    
-    ### This checks that the AUC time ranges are correct
-    if AUC_analysis_bool:
-             
-        if AUC_pre_1 > AUC_pre_2:
-            raise Exception("The start time point of the AUC pre time range is higher than the pre AUC end timepoint")
-        
-        if AUC_post_1 > AUC_post_2:
-            raise Exception("The start time point of the AUC post time range is lower than the post AUC end timepoint")
-        
-        if AUC_post_2 < AUC_pre_1:
-            raise Exception("The start timepoint of the AUC pre time range is higher than the post AUC end timepoint")
-        
-        if AUC_pre_1 < Range_pre:
-            raise Exception("The start time point of the AUC pre time range is lower than the pre extraction start timepoint")
-         
-        if AUC_post_2 > Range_post:
-            raise Exception("The end time point of the AUC post time range is higher than the extraction end timepoint")
-    
-    ### This checks that the Zex time ranges are correct
-    if Zex_analysis_bool:
-        
-        if zex_pre_1 > zex_pre_2:
-            raise Exception("The start time point of the Z-extreme pre time range is higher than the pre Z-extreme end timepoint")
-        
-        if zex_post_1 > zex_post_2:
-            raise Exception("The start time point of the Z-extreme post time range is lower than the post Z-extreme end timepoint")
-        
-        if zex_post_2 < zex_pre_1:
-            raise Exception("The start timepoint of the Z-extreme pre time range is higher than the post Z-extreme end timepoint")
-        
-        if zex_pre_1 < Range_pre:
-            raise Exception("The start time point of the Z-extreme pre time range is lower than the extraction start timepoint")
-         
-        if zex_post_2 > Range_post:
-            raise Exception("The end time point of the Z-extreme post time range is higher than extraction end timepoint")    
-          
-    ### This checks that the Average Z-score time ranges are correct        
-    if Average_analysis_bool:
-        
-        if avg_pre_1 > avg_pre_2:
-            raise Exception("The start time point of the Average Z-score pre time range is higher than the pre Z-extreme end timepoint")
-        
-        if avg_post_1 > avg_post_2:
-            raise Exception("The start time point of the Average Z-score post time range is lower than the post Z-extreme end timepoint")
-        
-        if avg_post_2 < avg_pre_1:
-            raise Exception("The start timepoint of the Average Z-score pre time range is higher than the post Z-extreme end timepoint")
-        
-        if avg_pre_1 < Range_pre:
-            rgaise Exception("The start time point of the Average Z-score pre time range is lower than the extraction start timepoint")
-         
-        if avg_post_2 > Range_post:
-            raise Exception("The end time point of the Average Z-score post time range is higher than extraction end timepoint")    
-           
+### Parameters for analysis
 
-# Parameters for analysis
+### Setting error type 
+if Timestamp_import_bool:
+    if SEM_bool:
+        Error_type = "SEM"
+    if std_bool:
+        Error_type = "Std"
+
 Start = 5
 Step_size_plot = 4
 
-# Empty lists and dictionaries
+### Empty lists and dictionaries
 Name_of_subjects_lst = []
 Calcium_dependent_signal_lst = []
 Calcium_independent_signal_lst = []
@@ -388,14 +541,19 @@ Timevector_calcium_independent_lst = []
 Timevector_calcium_dependent_lst = []
 Behavioral_event_lst = []
 Settings_for_analysis = {} # Dictionary where results will be appended to
+Timestamps_for_camera_frames_lst = []
 
-Paths_to_experiment_files = Path(path_to_experiment).glob("*") # Getting paths to each individual animal
+### Getting paths to each individual subject
+Paths_to_experiment_files = Path(path_to_experiment).glob("*") 
 
+### For looping through subject paths
 for path in Paths_to_experiment_files:
   
-    path_str = str(path)   # path is converted to string  
-    Subject_name = re.search("([^\/|^\\\]+$)", path_str).group(0)          # Extracting subject name using regex, where subject name is the subject´s folder name  
-             
+    path_str = str(path) 
+    ### Extracting subject name using regex, where subject name is the subject´s folder name
+    Subject_name = re.search("([^\/|^\\\]+$)", path_str).group(0)            
+      
+    ### First importing data for entire recording, which will be used even if the user didn´t check the "use timestamps?" checkbox.       
     try:     
         
         subject_data = tdt.read_block(path_str, t1= Start)                      # Reading data from 5s to end of recording
@@ -408,37 +566,50 @@ for path in Paths_to_experiment_files:
         Calcium_independent_frame_rate = subject_data.streams["_405A"].fs       # Extracting frame rate of calcium independent signal  
         Calcium_independent_frame_rate_lst.append(Calcium_independent_frame_rate) # Appending calcium independent frame rate 
         Name_of_subjects_lst.append(Subject_name)                                 # Appending subject name
-
+          
+        ### If the "use timestamps?" checkbox was checked, the below code will be executed to import timestamps of behavioral event and also timestamps of camera frames                        
+        if Timestamp_import_bool:                                                   # If stimuli is not false, import it.   
+                                                               
+            try:
+                Behavioral_event_animal = pd.read_csv(f"{path_str}\\Timestamps_{Stimuli}.csv").squeeze() ### Reading and squeezing behavioral event lst
+                Timestamps_for_camera_frames = pd.DataFrame(subject_data.epocs.Cam1.onset, columns=["Seconds"]).squeeze()
+                Behavioral_event_lst.append(Behavioral_event_animal)
+                Timestamps_for_camera_frames_lst.append(Timestamps_for_camera_frames)                    ### Importing timestamp of frames
+            
+            ### If either the behavioral event timestamps or the timestamps of camera frames were not able to be imported, 
+            ###then the data corresponding to this subject (calcium recordings, subject name etc) will be deleted
+            except:
+                print(f"The timestamp file for the {Subject_name} was not found")
+                del Name_of_subjects_lst[-1]
+                del Calcium_dependent_signal_lst[-1]
+                del Calcium_independent_signal_lst[-1]
+                del Calcium_dependent_frame_rate_lst[-1]
+                del Calcium_independent_frame_rate_lst[-1]                                                    
     except:    
             print(f"The {Subject_name} folder was not able to be read by the tdt package.")
             pass 
-                            
-    if Timestamp_import_bool:                                                   # If stimuli is not false, import it.   
-                                                           
-        try:
-            Behavioral_event_animal = pd.read_csv(f"{path_str}\\Timestamps_{Stimuli}.csv")
-            Behavioral_event_lst.append(Behavioral_event_animal)
-        except:
-            print(f"The timestamp file for the {Subject_name} was not found")                                      
-
-### Generating path to main folder.
+                               
+### Generating path to create the  main results folder in which all data will be put in.
 path_to_experiment_windows_path = Path(path_to_experiment)
 Main_folder = Path.joinpath(path_to_experiment_windows_path, f"Results {path_to_experiment_windows_path.parts[-1]}")
 
 ### If the default main folder path already exists, i.e., code has been run before, this 
 ### code will generate a unique folder name consisting of default name + an integer. 
 ### Thus, there is an unlimited amount of time in which the code can be run.
-
 if Main_folder.is_dir():
     i = 2
     while Path.joinpath(path_to_experiment_windows_path,f"Results {path_to_experiment_windows_path.parts[-1]} ({i})").is_dir():
         i += 1
     Main_folder = Path.joinpath(path_to_experiment_windows_path, f"Results {path_to_experiment_windows_path.parts[-1]} ({i})")
 
+### Creating folders for exporting figures showing the entire recording
 Main_folder.mkdir(parents=True)
 Figures_path = Path.joinpath(Main_folder, "Figures of entire recordings")
 Figures_path.mkdir(parents=True) 
 
+
+### Creating directories to export data and figures relevant to perievent analysis, if the
+### "use timestamps?" checkbox was checked in.
 if Timestamp_import_bool:
     Data_path = Path.joinpath(Main_folder, f"Output perievent {Stimuli} analysis")
     Data_path.mkdir(parents=True)
@@ -447,23 +618,66 @@ if Timestamp_import_bool:
     Data_perievent = Path.joinpath(Data_path, "Data")  
     Data_perievent.mkdir(parents=True)
 
-# Creating time vectors for calcium independent and calcium dependent signals
+### Converting behavioral timestamp files which contain frame numbers to seconds.
+for i, (timestamps_of_camera_frames, timestamps_of_animal) in enumerate(zip(Timestamps_for_camera_frames_lst, Behavioral_event_lst)):
+    
+    if re.search("[fF][rR][aA][mM][eE]", timestamps_of_animal.name): ### Checking if panda series name contains the column frame (case insensitive)
+ 
+        timestamps_of_animal_converted = timestamps_of_camera_frames[timestamps_of_animal.astype(int)].reset_index(drop=True)
+        Behavioral_event_lst[i] = timestamps_of_animal_converted
+        
 
+### Creating time vectors for calcium independent and calcium dependent signals
 for calcium_dependent_signal, calcium_independent_signal, calcium_dependent_frame_rate, calcium_independent_frame_rate  in zip(Calcium_dependent_signal_lst, Calcium_independent_signal_lst, Calcium_dependent_frame_rate_lst, Calcium_independent_frame_rate_lst):
+    
+    ### The timevector is created by generating, using numpy linspace (https://numpy.org/doc/stable/reference/generated/numpy.linspace.html), an vector with evenly spaced numbers. 
+    ### Initially, for each signal (465 or 405) each data point in the signals will have one data point in the timevector, since we´ve set end value the same as the number of time vector datapoints to be generated
+    ### For example, for one signal with 6000 data points, the time vector will consist of 6000 datapoints with integers. 
+    ### Lastly, the timevector will be divided by the frame rate (i.e. number of signal data points per second for that signal). Upon doing this, the timevector is converted to seconds, and 
+    ### we will then have a time vector with data points representing the time point of all signal data points.
+    ### You can read more about this approach here: ### find link
     
     calcium_dependent_time_vector = Start + np.linspace(1, len(calcium_dependent_signal), len(calcium_dependent_signal))/calcium_dependent_frame_rate          # Creating timevector for calcium dependent signal
     Timevector_calcium_dependent_lst.append(calcium_dependent_time_vector)                                                                                     # Appending calcium dependent time vector 
     calcium_independent_time_vector = Start + np.linspace(1, len(calcium_independent_signal), len(calcium_independent_signal))/calcium_independent_frame_rate  # Creating timevector for calcium_independent signal
     Timevector_calcium_independent_lst.append(calcium_independent_time_vector)                                                                                 # Appending calcium independent time vector
+
+### Correcting calcium dependent with calcium independent signal.
+Correct_calcium_dep_lst = []
+Calcium_independent_fitted_lst = []
+
+for calcium_independent_signal, calcium_dependent_signal in zip(Calcium_independent_signal_lst, Calcium_dependent_signal_lst): 
     
-# Plotting raw signals
+    ### The calcium-dependent signal is corrected by fitting the calcium-independent signal to the calcium-dependent.
+    ### THis is done using the numpy.polyfit function (https://numpy.org/doc/stable/reference/generated/numpy.polyfit.html)
+    ### which performs a least-squared polynomial fit. Since we are using the polyfit with the first degree, we are performing
+    ### a least-squared linear regression to fit the calcium-independent to the calcium-dependent. 
+    ### After fitting, we subtract the fitted calcium-independent from the calcium-dependent and
+    ### then get the corrected calcium-dependent signal which we append into the 
+    ### Correct_calcium_dep lst. 
+    
+    fitting_independent_to_dependent = np.polyfit(calcium_independent_signal, calcium_dependent_signal, 1) ### Using polyfit to the first degree.
+    fit_line_independent_to_dependent = np.multiply(fitting_independent_to_dependent[0], calcium_independent_signal) + fitting_independent_to_dependent[1]
+    Corrected_calcium_dependent = calcium_dependent_signal - fit_line_independent_to_dependent
+    Calcium_independent_fitted_lst.append(fit_line_independent_to_dependent)
+    Correct_calcium_dep_lst.append(Corrected_calcium_dependent)
+
+### Plotting raw signals
+
+### The general approach for plotting these signal is that when there are
+### multiple plots to generate, each figure will contain 4 plots.
+### This is to make sure that the sizes of the plots remain consistent. 
+
+### This will only be explained here, but the approach is same
+### in all for loops including the "jump_ind" variable
+
 Jump_ind = 0
 
-for i in range(math.ceil(len(Name_of_subjects_lst)/4)):  
+for i in range(math.ceil(len(Name_of_subjects_lst)/4)):  ### This will jump 4 steps, i.e., each loop in this for loop will generate one figure with 4 plots. 
 
-    fig_raw_signal, axs_raw_signal = plt.subplots(4,1, figsize=(16,16)) ### Generating figure object with subplots
+    fig_raw_signal, axs_raw_signal = plt.subplots(4,1, figsize=(16,16)) ### Generating figure object with 4 subplots
     
-    for j, ax in enumerate(axs_raw_signal):
+    for j, ax in enumerate(axs_raw_signal): ### This will iterate through the axes in the figure object with 4 subplots.
         
         if j + Jump_ind + 1 > len(Name_of_subjects_lst):
             break
@@ -482,23 +696,10 @@ for i in range(math.ceil(len(Name_of_subjects_lst)/4)):
     Path_to_export_figures = Path.joinpath(Figures_path, f"Raw_signal subjects {Jump_ind} - {Jump_ind+4} .tiff")
     fig_raw_signal.savefig(Path_to_export_figures)
     
-    Jump_ind += 4   
+    Jump_ind += 4 ### After exporting the figure, jump_ind will increase with 4, to sample the next 4 iteration subject data  
 
-# Correcting calcium dependent with calcium independent signal.
-
-Correct_calcium_dep_lst = []
-Calcium_independent_fitted_lst = []
-
-for calcium_independent_signal, calcium_dependent_signal in zip(Calcium_independent_signal_lst, Calcium_dependent_signal_lst): 
-    fitting_independent_to_dependent = np.polyfit(calcium_independent_signal, calcium_dependent_signal, 1) ### Using polyfit to the second degree
-    fit_line_independent_to_dependent = np.multiply(fitting_independent_to_dependent[0], calcium_independent_signal) + fitting_independent_to_dependent[1]
-    Corrected_calcium_dependent = calcium_dependent_signal - fit_line_independent_to_dependent
-    Calcium_independent_fitted_lst.append(fit_line_independent_to_dependent)
-    Correct_calcium_dep_lst.append(Corrected_calcium_dependent)
-
+### Plotting fitted calcium independent signal
 Jump_ind = 0
-
-# Plotting fitted calcium independent signal
 
 for i in range(math.ceil(len(Name_of_subjects_lst)/4)):  
 
@@ -509,7 +710,6 @@ for i in range(math.ceil(len(Name_of_subjects_lst)/4)):
         if j + Jump_ind + 1 > len(Name_of_subjects_lst):
             break
         else:
-            
             ax.plot(Timevector_calcium_dependent_lst[j+Jump_ind], Calcium_dependent_signal_lst[j+Jump_ind], color="green", label="Calcium dependent")        # Plotting calcium dependent signal
             ax.plot(Timevector_calcium_independent_lst[j+Jump_ind], Calcium_independent_fitted_lst[j+Jump_ind], color="Blue", label="Fitted calcium independent") # Plotting calcium independent signal
             ax.set_title(f"{Name_of_subjects_lst[j+Jump_ind]} raw signals", fontsize=30)
@@ -525,28 +725,54 @@ for i in range(math.ceil(len(Name_of_subjects_lst)/4)):
 
 if Timestamp_import_bool: ### This will perform the perievent analysis, but only if you clicked the "Use timestamps?" checkbox.
     
+    ### This code section will remove timestamps that are too close to the start of recordings or too close too end.
+    ### If they are so close so that we can´t extract the time range of neural activity 
     
+    ### This lst will contain the indexes of the behavioral event files in the Behavioral_event_lst 
+    ### that are either initially or after filtering, empty. These indexes will thereafter be used to 
+    ### delete the files.
+    Indexes_for_empty_behavioral_event_lst_to_be_removed = []
+    
+    for i, animal_timestamps in enumerate(Behavioral_event_lst):
+        
+        animal_timestamps_filtered = animal_timestamps[((animal_timestamps+Range[0]) > Start) &  ((animal_timestamps + Range[1]) < Timevector_calcium_dependent_lst[i][-1])].reset_index(drop=True)
+        Behavioral_event_lst[i] = animal_timestamps_filtered  
+        
+        if animal_timestamps_filtered.size == 0:
+            Indexes_for_empty_behavioral_event_lst_to_be_removed.append(i)
+    
+    ### Using list comprehension to remove the files of the subjects which behavioral event files had a size of zero. 
+    ### If the index of that subject is in the Indexes_for_empty_behavioral_event_lst_to_be_removed, it will be removed using the below code. 
+    Behavioral_event_lst = [Behavioral_file_animal for i, Behavioral_file_animal in enumerate(Behavioral_event_lst) if i not in Indexes_for_empty_behavioral_event_lst_to_be_removed]
+    Correct_calcium_dep_lst = [Correct_calcium_dep_animal for i, Correct_calcium_dep_animal in enumerate(Correct_calcium_dep_lst) if i not in Indexes_for_empty_behavioral_event_lst_to_be_removed]
+    Name_of_subjects_lst = [subject for i, subject in enumerate(Name_of_subjects_lst) if i not in Indexes_for_empty_behavioral_event_lst_to_be_removed]
+    Timevector_calcium_dependent_lst = [Timevector_calcium_dependent_animal for i, Timevector_calcium_dependent_animal in enumerate(Timevector_calcium_dependent_lst) if i not in Indexes_for_empty_behavioral_event_lst_to_be_removed]
+          
     ### Extracting the neural activity surrounding each behavioral event
     Z_score_of_neural_activity_surrounding_events = [[] for animal in Correct_calcium_dep_lst] # Creating 2D list with sublist for each animal in Correct_calcium_dep_lst
     
     for i, (signal_animal, timestamps_animal, timevector_animal) in enumerate(zip(Correct_calcium_dep_lst, Behavioral_event_lst, Timevector_calcium_dependent_lst)):
       
-      for j, behavioral_event in timestamps_animal.iterrows():
-        ### Checking if event timestamps are not too close to the begininning or end of the video
-        if ((behavioral_event.values[0]-Range[0]) > Start) & ((behavioral_event.values[0]+Range[1]) < timevector_animal[-1]): 
-    
-          ### select indices around event. The range around event is determined by extract.
-          index_for_event = np.where((timevector_animal > (behavioral_event.values[0]+Range[0])) & (timevector_animal < (behavioral_event.values[0]+Range[1])))[0] ### Selecting the indices which correspond to the time surrounding the behavioral event
+      for behavioral_event in timestamps_animal:
+
+          ### The activity surrounding each behavioral event will be gathered using numpy.where(https://numpy.org/doc/stable/reference/generated/numpy.where.html). 
+          ### where indices fullfilling certain critiries will be extracted. In our case, we select the indices of the timevector where the data points are 
+          ### firstly higher than the time point of the behavioral event - the start time of the total extraction range AND lower than the time point of the behavioral event + the end time of the total extraction range.
+          index_for_event = np.where((timevector_animal > (behavioral_event+Range[0])) & (timevector_animal < (behavioral_event+Range[1])))[0]
+          
+          ### These indeces are thereafter used to select the signal data points in the corrected calcium dependent signal.
+          ### This works since the timevector and the corrected calcium signal share the same indices.
+          ### To explain it a bit further, to find the signal corresponding to a specific time point in the timevector, 
+          ### you only need to use the index of that time data point in the signalvector. 
           Neural_activity_for_behavioral_event = signal_animal[index_for_event]
      
-          # Z-scoring the neural activity 
-          
-          index_for_baseline = np.where((timevector_animal > (behavioral_event.values[0]+Baseline[0])) & ((behavioral_event.values[0]+Baseline[1]) < timevector_animal))
+          # Z-scoring the neural activity using the same np.where function but with the baseline time ranges instead.      
+          index_for_baseline = np.where((timevector_animal > (behavioral_event+Baseline[0])) & (timevector_animal < (behavioral_event+Baseline[1])))
           Neural_activity_of_baseline = signal_animal[index_for_baseline]
           Z_score = (Neural_activity_for_behavioral_event - Neural_activity_of_baseline.mean()) / Neural_activity_of_baseline.std()                                
           Z_score_of_neural_activity_surrounding_events[i].append(Z_score)
 
-    ### Making sure all the perievents have same length and makign a final timevector to use
+    ### Making sure all the perievents have same length and making a final timevector to use
     ### for all perievents. 
 
     ### This collects the minimum trial length for each animal
@@ -560,7 +786,7 @@ if Timestamp_import_bool: ### This will perform the perievent analysis, but only
     total_min_peri_event = np.min(min_perievent_length_animal)
 
     ### This trims down the lengths of all trials to the shortest trial length
-    ### ofall animals
+    ### of all animals
     for i, animal_peri_event_signals in enumerate(Z_score_of_neural_activity_surrounding_events):
         animal_peri_event_signals = [peri_event[:total_min_peri_event] for peri_event in animal_peri_event_signals]
         Z_score_of_neural_activity_surrounding_events[i] = animal_peri_event_signals
@@ -568,8 +794,8 @@ if Timestamp_import_bool: ### This will perform the perievent analysis, but only
     ### This creates a timevector based on the trimmed trials
     ### This has the same length as all trials  
     Timevec_peri_event_final = Range[0] + np.linspace(1, len(Z_score_of_neural_activity_surrounding_events[0][0]), len(Z_score_of_neural_activity_surrounding_events[0][0]))/Calcium_dependent_frame_rate_lst[0]
-
     Z_score_averaged_neural_activity = []
+    Z_score_error_per_animal = []
     
     ### All the values extracted for statistical analysis will be appended
     ### to this dictionary
@@ -584,76 +810,93 @@ if Timestamp_import_bool: ### This will perform the perievent analysis, but only
                             "Average-post":[],
                             }
     
+    ### Extracting the measures for the statistical analysis. This will be done
+    ### for each subject.
+    
     for i, z_score_animal_all_trials in enumerate(Z_score_of_neural_activity_surrounding_events):
         
-        z_score_animal_avg = np.mean(z_score_animal_all_trials, axis=0) ### Avearing all trials within each animal
+        z_score_animal_avg = np.mean(z_score_animal_all_trials, axis=0) ### Averaging all trials within each animal
         Z_score_averaged_neural_activity.append(z_score_animal_avg)
         
+        ### This will calculated the standard deviation for each subject if it was chosen as the error type in the user interface. 
+        if std_bool:
+            
+            Z_score_std_per_animal = np.std(z_score_animal_all_trials, axis=0)
+            Z_score_error_per_animal.append(Z_score_std_per_animal)
+        
+        ### This will calculated the standard error of the mean for each subject if it was chosen as the error type in the user interface.
+        if SEM_bool:
+            
+            Z_score_SEM_per_animal = np.std(z_score_animal_all_trials, axis=0) / np.sqrt(len(z_score_animal_all_trials))
+            Z_score_error_per_animal.append(Z_score_SEM_per_animal)
+        
+        ### If the "Use Area under curve?" checkbox is filled, this will calculate the AUC. 
         if AUC_analysis_bool:
             
-            index_pre_AUC = np.where((Timevec_peri_event_final > AUC_pre_1) & (AUC_pre_2 < Timevec_peri_event_final))
-            index_post_AUC = np.where((Timevec_peri_event_final > AUC_post_1) & (AUC_post_2 < Timevec_peri_event_final)) 
+            index_pre_AUC = np.where((Timevec_peri_event_final > AUC_pre_1) & (Timevec_peri_event_final < AUC_pre_2))
+            index_post_AUC = np.where((Timevec_peri_event_final > AUC_post_1) & (Timevec_peri_event_final < AUC_post_2)) 
+            
+            ### Area under curve is calculated by using sk.learn metrics AUC function, which 
+            ### calcualtes the AUC using the trapezoidal rule.
             AUC_pre  = auc(Timevec_peri_event_final[index_pre_AUC], z_score_animal_avg[index_pre_AUC])
             AUC_post = auc(Timevec_peri_event_final[index_post_AUC], z_score_animal_avg[index_post_AUC])
             Statistical_analysis["AUC-pre"].append(AUC_pre)
             Statistical_analysis["AUC-post"].append(AUC_post)
             Settings_for_analysis["AUC time range (s)"] = [f"Pre: {AUC_pre_1} to {AUC_pre_2}", f"Post: {AUC_post_1} to {AUC_post_2}"]
-            
+        
+        ### If the "Use Z-extreme?" checkbox is filled, this will calculate the Z-extreme (Z-max or Z-min) will be calculated.
         if Zex_analysis_bool:
             
-            index_pre_zex = np.where((Timevec_peri_event_final > zex_pre_1) & (zex_pre_2 < Timevec_peri_event_final))
-            index_post_zex = np.where((Timevec_peri_event_final > zex_post_1) & (zex_post_2 < Timevec_peri_event_final))
+            index_pre_zex = np.where((Timevec_peri_event_final > zex_pre_1) & (Timevec_peri_event_final < zex_pre_2))
+            index_post_zex = np.where((Timevec_peri_event_final > zex_post_1) & (Timevec_peri_event_final < zex_post_2))
             
-            ### Getting the minimum or the maximum of the Z-score within the specified time ranged,
-            ### dependent on whether the z-min or z-max checkbox was checked.
+            ### The below code will extract either the Z-score minimum or maximum within the specified time ranged,
+            ### dependent on whether the z-min or z-max checkbox was checked.    
             
+            ### If Z-min_bool is True, the Z-min will be calculated
             if Z_min_bool:
                 
                 Z_min_pre = z_score_animal_avg[index_pre_zex].min()
-                Z_min_post = z_score_animal_avg[index_post_zex].min()
-                
+                Z_min_post = z_score_animal_avg[index_post_zex].min()     
                 Statistical_analysis["Z-min pre"].append(Z_min_pre)
                 Statistical_analysis["Z-min post"].append(Z_min_post)
                 Settings_for_analysis["Z-min time range(s)"] = [f"Pre: {zex_pre_1} to {zex_pre_2}", f"Post: {zex_post_1} to {zex_post_2}"]
-                
+            
+            ### If Z-min_bool is True, the Z-min will be calculated
             if Z_max_bool:
                 
                 Z_max_pre = z_score_animal_avg[index_pre_zex].max()
-                Z_max_post = z_score_animal_avg[index_pre_zex].max()
-                
+                Z_max_post = z_score_animal_avg[index_post_zex].max()  
                 Statistical_analysis["Z-max pre"].append(Z_max_pre)
                 Statistical_analysis["Z-max post"].append(Z_max_post)
                 Settings_for_analysis["Z-max time range(s)"] = [f"Pre: {zex_pre_1} to {zex_pre_2}", f"Post: {zex_post_1} to {zex_post_2}"]
-            
-                
+        
+        ### If the "Use Z-score average?" checkbox is filled, this will calculate the average z-score will be calculated.
         if Average_analysis_bool:
             
-            index_pre_avg = np.where((Timevec_peri_event_final > avg_pre_1) & (avg_pre_2 < Timevec_peri_event_final))
-            index_post_avg = np.where((Timevec_peri_event_final > avg_post_1) & (avg_post_2 < Timevec_peri_event_final))
-            
+            index_pre_avg = np.where((Timevec_peri_event_final > avg_pre_1) & (Timevec_peri_event_final < avg_pre_2))
+            index_post_avg = np.where((Timevec_peri_event_final > avg_post_1) & (Timevec_peri_event_final < avg_post_2))
             Z_score_avg_pre = z_score_animal_avg[index_pre_avg].mean()
             Z_score_avg_post = z_score_animal_avg[index_post_avg].mean()
-            
-            Statistical_analysis["Average-pre"].append(Z_score_avg_pre)
-            Statistical_analysis["Average-post"].append(Z_score_avg_post)
-            
+            Statistical_analysis["Average Z-score pre"].append(Z_score_avg_pre)
+            Statistical_analysis["Average Z-score post"].append(Z_score_avg_post)
             Settings_for_analysis["Average Z-score time range (s)"] = [f"Pre: {avg_pre_1} to {avg_pre_2}", f"Post: {avg_post_1} to {avg_post_2}"]
-            
+    
+    ### Plotting peri event traces for the individual subjects
     Jump_ind = 0
     
     for i in range(math.ceil(len(Name_of_subjects_lst)/4)):  
 
         fig_peri_event_signal, axs_peri_event_signal = plt.subplots(4,1, figsize=(16,16)) ### Generating figure object with subplots
-        
         for j, ax in enumerate(axs_peri_event_signal):
             
             if j + Jump_ind + 1 > len(Name_of_subjects_lst):
                 break
-            else:
-                
+            else:            
                 ax.plot(Timevec_peri_event_final, Z_score_averaged_neural_activity[j+Jump_ind], color="green")        # Plotting calcium dependent signal
+                ax.fill_between(Timevec_peri_event_final, Z_score_averaged_neural_activity[j+Jump_ind]+Z_score_error_per_animal[j+Jump_ind], Z_score_averaged_neural_activity[j+Jump_ind]-Z_score_error_per_animal[j+Jump_ind], color="green", alpha=0.3)
                 ax.set_title(f"{Name_of_subjects_lst[j+Jump_ind]}", fontsize=30)
-                ax.set_ylabel(f"Z-score", fontsize=25)
+                ax.set_ylabel("Z-score", fontsize=25)
                 ax.set_xlabel("Time (s)", fontsize=25)
                 ax.tick_params(axis="both", which="major", labelsize=17)
             
@@ -664,60 +907,74 @@ if Timestamp_import_bool: ### This will perform the perievent analysis, but only
 
     ### Averaging all animals together and plotting the averaged activity.
     Z_score_averaged_completely = np.mean(Z_score_averaged_neural_activity, axis=0)
+
+    if std_bool:
+        Z_score_error_total = np.std(Z_score_averaged_neural_activity, axis=0)
+    
+    if SEM_bool:    
+        Z_score_error_total = np.std(Z_score_averaged_neural_activity, axis=0) / np.sqrt(len(Name_of_subjects_lst))
+        
+    ### Plotting the averaged across all subjects peri event trace  
     fig_all_averaged = plt.figure(figsize=(15,8))     
     ax_fig_all_averaged = plt.subplot(111)
-
     ax_fig_all_averaged.plot(Timevec_peri_event_final, Z_score_averaged_completely, color="green")
-    ax_fig_all_averaged.set_title(f"Single trace", fontsize=30)
-    ax_fig_all_averaged.set_ylabel(f"Z-score", fontsize=25)
+    ax_fig_all_averaged.fill_between(Timevec_peri_event_final, Z_score_averaged_completely-Z_score_error_total, Z_score_averaged_completely+Z_score_error_total,color="green", alpha = 0.3)
+    ax_fig_all_averaged.set_title("Single trace", fontsize=30)
+    ax_fig_all_averaged.set_ylabel("Z-score", fontsize=25)
     ax_fig_all_averaged.set_xlabel("Time (s)", fontsize=25)
     ax_fig_all_averaged.spines.right.set_visible(False)
     ax_fig_all_averaged.spines.top.set_visible(False)
     ax_fig_all_averaged.tick_params(axis="both", which="major", labelsize=17)
     Path_for_exporting_sinle_averaged_trace = Path.joinpath(Figures_perievent, "Perievent single trace.tiff")
     plt.savefig(Path_for_exporting_sinle_averaged_trace, dpi=200)
-         
-    
 
     ### Appending settings to dictionary
     Settings_for_analysis["Baseline time range (s)"] = [f"{Baseline[0]} to {Baseline[1]}"]
     Settings_for_analysis["Extraction time range (s)"] = [f"{Range[0]} to {Range[1]}"]
     Settings_for_analysis["Number of animals"] = [len(Name_of_subjects_lst)]
     Settings_for_analysis["Trials per subject"] = [f"{subject}:{len(Peri_event_animal)} trials" for subject, Peri_event_animal in zip(Name_of_subjects_lst, Z_score_of_neural_activity_surrounding_events)]
+    Settings_for_analysis["Error type"] = [Error_type]
     Settings_for_analysis["Stimuli"] = [Stimuli]
     
-    ### Making values in dictionary same length so the dict can be exported to csvs using Pandas Dataframe
-    
+    ### Making values in settings dictionary same length so the dict can be exported to csvs using Pandas to_csv function
     Settings_for_analysis_max_length = max([len(v) for v in Settings_for_analysis.values()]) # Finding column with the highest length
 
     for key, values in Settings_for_analysis.items():
         if len(values) < Settings_for_analysis_max_length: # If a column has lower number of values then max length, then this code will fill with NaNs until it has the same length.
-            while len(values) < Settings_for_analysis_max_length:
+            while len(values) < Settings_for_analysis_max_length: # While len(values) is lower then max, np.nan will be appended.
                 Settings_for_analysis[key].append(np.nan)
     
+    ### Exporting settings for the peri event analysis
     Settings_for_analysis_pd = pd.DataFrame(Settings_for_analysis)
-    Path_to_export_settings_for_analysis = Path.joinpath(Data_perievent, f"Settings for peri event analysis.csv")
+    ### This creates the path for exporting the csv
+    Path_to_export_settings_for_analysis = Path.joinpath(Data_perievent, "Settings for peri event analysis.csv")
     Settings_for_analysis_pd.to_csv(Path_to_export_settings_for_analysis, index=False)
     
-    # Exporting statistical analysis
-    Statistical_analysis_filtered = {k:v for k, v in Statistical_analysis.items() if len(v) > 0}
+    ### Exporting statistical analysis
+    Statistical_analysis_filtered = {k:v for k, v in Statistical_analysis.items() if len(v) > 0} ### Some of the values for the items in statistical analysys 
+                                                                                                 ### dictionary will be empty (e.g., Z-min values will be empty if we chose Z-max in the Gui.)
+                                                                                                 ### This dictiory comprehension will remove empty key-value pairs.
     Statistical_analysis_pd = pd.DataFrame(Statistical_analysis_filtered)
-    Path_to_export_statistical_analysis = Path.joinpath(Data_perievent, "Statistical_analysis.csv")  
+    Path_to_export_statistical_analysis = Path.joinpath(Data_perievent, "Statistical_analysis.csv")  ### This creates the path for exporting the csv 
     Statistical_analysis_pd.to_csv(Path_to_export_statistical_analysis, index=False)
         
     # Exporting perievents for individual animals
-    Perievent_individual_animals_dict = {Subject:Perievent for Subject, Perievent in zip(Name_of_subjects_lst, Z_score_averaged_neural_activity)}
+    # Using for loop to create dictionary for exporting traces of individual animals
+    Perievent_individual_animals_dict = {}
+    for i, subject in enumerate(Name_of_subjects_lst):
+        
+        Perievent_individual_animals_dict[f"{subject} signal"] = Z_score_averaged_neural_activity[i]
+        Perievent_individual_animals_dict[f"{subject} {Error_type}"] = Z_score_error_per_animal[i]
+    
+    ### After the signals and errors have been appended to the dictionary, it is converted to a pandas dataframe
     Perievent_individial_animals_pd = pd.DataFrame(Perievent_individual_animals_dict)
-    Perievent_individial_animals_pd.insert(0, "Seconds", Timevec_peri_event_final)
-    Path_to_export_perievents_for_individual_animals = Path.joinpath(Data_perievent, "Perievent_individual_animals.csv")  
+    Perievent_individial_animals_pd.insert(0, "Seconds", Timevec_peri_event_final)                                         ### The time vector for the peri event traces is inserted as the first column
+    Path_to_export_perievents_for_individual_animals = Path.joinpath(Data_perievent, "Perievent individual animals.csv")   ### This creates the path for exporting the csv
     Perievent_individial_animals_pd.to_csv(Path_to_export_perievents_for_individual_animals, index=False)
     
-    ### Exporting perievents averaged across all animals
-    Perievent_averaged_across_animals_dict = {Subject:Perievent for Subject, Perievent in zip(Name_of_subjects_lst, Z_score_averaged_neural_activity)}
+    ### Exporting perievents averaged across all subjects (single trace representing total average of all subjects)
+    ### The dictionary is created with peri event timevector, peri event signals and the error
+    Perievent_averaged_across_animals_dict = {"Seconds" : Timevec_peri_event_final, "Perievent signal" : Z_score_averaged_completely, f"Perievent {Error_type}" : Z_score_error_total}
     Perievent_averaged_across_animals_pd = pd.DataFrame(Perievent_averaged_across_animals_dict)
-    Perievent_averaged_across_animals_pd.insert(0, "Seconds", Timevec_peri_event_final)
-    Path_to_export_averaged_peri_event_trace = Path.joinpath(Data_perievent, f"Perievent averaged trace.csv")
+    Path_to_export_averaged_peri_event_trace = Path.joinpath(Data_perievent, "Perievent averaged trace.csv") ### This creates the path for exporting the csv
     Perievent_averaged_across_animals_pd.to_csv(Path_to_export_averaged_peri_event_trace, index=False)
-
- 
-    
