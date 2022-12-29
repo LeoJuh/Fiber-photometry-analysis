@@ -513,7 +513,7 @@ Checkbox_timestamps = tk.Checkbutton(mGui,
 
 ### Placing buttons and checkboxes
 browse_Button.place(relx=0.0, rely=0.01, relwidth=0.45, relheight=0.05)
-Exit_Button.place(relx=0.35, rely=0.95, relwidth=0.3, relheight=0.05)
+Exit_Button.place(relx=0.35, rely=0.94, relwidth=0.3, relheight=0.05)
 Checkbox_timestamps.place(relx=0.05, rely=0.11, relwidth=0.25, relheight=0.06)
 
 ### Blocking code after .mainloop until mGui has been destroyed and quitted
@@ -556,25 +556,35 @@ for path in Paths_to_experiment_files:
     ### First importing data for entire recording, which will be used even if the user didn´t check the "use timestamps?" checkbox.       
     try:     
         
-        subject_data = tdt.read_block(path_str, t1= Start)                      # Reading data from 5s to end of recording
+        ### Reading in data
+        subject_data = tdt.read_block(path_str, t1= Start)                     # Reading data from 5s to end of recording
+        subject_data_frames = tdt.read_block(path_str)                         # Reading data from 5s to end of recording. These data will strictly be used to get the timestamps of the camera frames.         
         Calcium_dependent_signal = subject_data.streams["_465A"].data          # Extracting caldium dependent signal from tdt data file
-        Calcium_dependent_signal_lst.append(Calcium_dependent_signal)          # Appending calcium dependent data
         Calcium_independent_signal = subject_data.streams["_405A"].data        # Extracting caldium independent signal from tdt data file
-        Calcium_independent_signal_lst.append(Calcium_independent_signal)      # Appending calcium independent data       
         Calcium_dependent_frame_rate = subject_data.streams["_465A"].fs        # Extracting frame rate of calcium dependent signal
-        Calcium_dependent_frame_rate_lst.append(Calcium_dependent_frame_rate)  # Appending calcium dependent frame rate     
-        Calcium_independent_frame_rate = subject_data.streams["_405A"].fs       # Extracting frame rate of calcium independent signal  
-        Calcium_independent_frame_rate_lst.append(Calcium_independent_frame_rate) # Appending calcium independent frame rate 
-        Name_of_subjects_lst.append(Subject_name)                                 # Appending subject name
-          
+        Calcium_independent_frame_rate = subject_data.streams["_405A"].fs      # Extracting frame rate of calcium independent signal
+         
+        ### Appending data
+        Calcium_dependent_signal_lst.append(Calcium_dependent_signal)              # Appending calcium dependent data
+        Calcium_independent_signal_lst.append(Calcium_independent_signal)          # Appending calcium independent data       
+        Calcium_dependent_frame_rate_lst.append(Calcium_dependent_frame_rate)      # Appending calcium dependent frame rate     
+        Calcium_independent_frame_rate_lst.append(Calcium_independent_frame_rate)  # Appending calcium independent frame rate
+        Name_of_subjects_lst.append(Subject_name)                                  # Appending subject names
+        
         ### If the "use timestamps?" checkbox was checked, the below code will be executed to import timestamps of behavioral event and also timestamps of camera frames                        
         if Timestamp_import_bool:                                                   # If stimuli is not false, import it.   
                                                                
             try:
-                Behavioral_event_animal = pd.read_csv(f"{path_str}\\Timestamps_{Stimuli}.csv").squeeze() ### Reading and squeezing behavioral event lst
-                Timestamps_for_camera_frames = pd.DataFrame(subject_data.epocs.Cam1.onset, columns=["Seconds"]).squeeze()
+                ### Reading in data
+                Behavioral_event_animal = pd.read_csv(f"{path_str}\\Timestamps_{Stimuli}.csv").squeeze("columns") # Reading and squeezing behavioral event lst
+                Timestamps_for_camera_frames = pd.DataFrame(subject_data_frames.epocs.Cam1.onset, columns=["Seconds"]).squeeze("columns") # This creates an pandas dataframe which 
+                                                                                                                                          # contain the time onset of each frame captured by the camera.
+                                                                                                                                          # This file will be used if we have behavioral timestamps expressed in frame number
+                                                                                                                                          # we need to convert frame number to seconds.
+                
+                ### Appending data
                 Behavioral_event_lst.append(Behavioral_event_animal)
-                Timestamps_for_camera_frames_lst.append(Timestamps_for_camera_frames)                    ### Importing timestamp of frames
+                Timestamps_for_camera_frames_lst.append(Timestamps_for_camera_frames)                    # Importing timestamp of frames
             
             ### If either the behavioral event timestamps or the timestamps of camera frames were not able to be imported, 
             ###then the data corresponding to this subject (calcium recordings, subject name etc) will be deleted
@@ -619,23 +629,23 @@ if Timestamp_import_bool:
     Data_perievent.mkdir(parents=True)
 
 ### Converting behavioral timestamp files which contain frame numbers to seconds.
-for i, (timestamps_of_camera_frames, timestamps_of_animal) in enumerate(zip(Timestamps_for_camera_frames_lst, Behavioral_event_lst)):
-    
-    if re.search("[fF][rR][aA][mM][eE]", timestamps_of_animal.name): ### Checking if panda series name contains the column frame (case insensitive)
- 
-        timestamps_of_animal_converted = timestamps_of_camera_frames[timestamps_of_animal.astype(int)].reset_index(drop=True)
-        Behavioral_event_lst[i] = timestamps_of_animal_converted
+if Timestamp_import_bool:
+    for i, (timestamps_of_camera_frames, timestamps_of_animal) in enumerate(zip(Timestamps_for_camera_frames_lst, Behavioral_event_lst)):
         
-
+        if re.search("[fF][rR][aA][mM][eE]", timestamps_of_animal.name): ### Checking if panda series name contains the column frame (case insensitive)
+     
+            timestamps_of_animal_converted = timestamps_of_camera_frames[timestamps_of_animal.astype(int)].reset_index(drop=True)
+            Behavioral_event_lst[i] = timestamps_of_animal_converted
+        
 ### Creating time vectors for calcium independent and calcium dependent signals
 for calcium_dependent_signal, calcium_independent_signal, calcium_dependent_frame_rate, calcium_independent_frame_rate  in zip(Calcium_dependent_signal_lst, Calcium_independent_signal_lst, Calcium_dependent_frame_rate_lst, Calcium_independent_frame_rate_lst):
     
     ### The timevector is created by generating, using numpy linspace (https://numpy.org/doc/stable/reference/generated/numpy.linspace.html), an vector with evenly spaced numbers. 
     ### Initially, for each signal (465 or 405) each data point in the signals will have one data point in the timevector, since we´ve set end value the same as the number of time vector datapoints to be generated
     ### For example, for one signal with 6000 data points, the time vector will consist of 6000 datapoints with integers. 
-    ### Lastly, the timevector will be divided by the frame rate (i.e. number of signal data points per second for that signal). Upon doing this, the timevector is converted to seconds, and 
-    ### we will then have a time vector with data points representing the time point of all signal data points.
-    ### You can read more about this approach here: ### find link
+    ### Lastly, the timevector will be divided by the frame rate (i.e. number of signal data points per second for that signal). The frame rate is fixed by a quartz crystal and is therefore reliable. 
+    ###Upon doing this, the timevector is converted to seconds, and we will then have a time vector with data points representing the time point of all signal data points.
+
     
     calcium_dependent_time_vector = Start + np.linspace(1, len(calcium_dependent_signal), len(calcium_dependent_signal))/calcium_dependent_frame_rate          # Creating timevector for calcium dependent signal
     Timevector_calcium_dependent_lst.append(calcium_dependent_time_vector)                                                                                     # Appending calcium dependent time vector 
@@ -703,9 +713,9 @@ Jump_ind = 0
 
 for i in range(math.ceil(len(Name_of_subjects_lst)/4)):  
 
-    fig_raw_signal, axs_raw_signal = plt.subplots(4,1, figsize=(16,16)) ### Generating figure object with subplots
+    fig_raw_fitted_signal, axs_raw_fitted_signal = plt.subplots(4,1, figsize=(16,16)) ### Generating figure object with subplots
     
-    for j, ax in enumerate(axs_raw_signal):
+    for j, ax in enumerate(axs_raw_fitted_signal):
         
         if j + Jump_ind + 1 > len(Name_of_subjects_lst):
             break
@@ -718,10 +728,34 @@ for i in range(math.ceil(len(Name_of_subjects_lst)/4)):
             ax.tick_params(axis="both", which="major", labelsize=17)
             ax.legend(fontsize=20, loc="upper right")
         
-    fig_raw_signal.tight_layout()
+    fig_raw_fitted_signal.tight_layout()
     Path_to_export_figures = Path.joinpath(Figures_path, f"Fitted calcium independent signal, subjects {Jump_ind} - {Jump_ind+4} .tiff")
-    fig_raw_signal.savefig(Path_to_export_figures)
+    fig_raw_fitted_signal.savefig(Path_to_export_figures)
     Jump_ind += 4   
+    
+### Plotting corrected calcium independent signal
+Jump_ind = 0
+
+for i in range(math.ceil(len(Name_of_subjects_lst)/4)):  
+
+    fig_corrected_signal, axs_corrected_signal = plt.subplots(4,1, figsize=(16,16)) ### Generating figure object with subplots
+    
+    for j, ax in enumerate(axs_corrected_signal):
+        
+        if j + Jump_ind + 1 > len(Name_of_subjects_lst):
+            break
+        else:
+            ax.plot(Timevector_calcium_dependent_lst[j+Jump_ind], Correct_calcium_dep_lst[j+Jump_ind], color="green", label="Calcium dependent")        # Plotting corrected calcium dependent signal
+            ax.set_title(f"{Name_of_subjects_lst[j+Jump_ind]} raw signals", fontsize=30)
+            ax.set_ylabel("dF", fontsize=25)
+            ax.set_xlabel("Time (s)", fontsize=25)
+            ax.tick_params(axis="both", which="major", labelsize=17)
+            ax.legend(fontsize=20, loc="upper right")
+        
+    fig_corrected_signal.tight_layout()
+    Path_to_export_figures = Path.joinpath(Figures_path, f"Correctec calcium dependent signal, subjects {Jump_ind} - {Jump_ind+4} .tiff")
+    fig_corrected_signal.savefig(Path_to_export_figures)
+    Jump_ind += 4  
 
 if Timestamp_import_bool: ### This will perform the perievent analysis, but only if you clicked the "Use timestamps?" checkbox.
     
@@ -769,8 +803,9 @@ if Timestamp_import_bool: ### This will perform the perievent analysis, but only
           # Z-scoring the neural activity using the same np.where function but with the baseline time ranges instead.      
           index_for_baseline = np.where((timevector_animal > (behavioral_event+Baseline[0])) & (timevector_animal < (behavioral_event+Baseline[1])))
           Neural_activity_of_baseline = signal_animal[index_for_baseline]
-          Z_score = (Neural_activity_for_behavioral_event - Neural_activity_of_baseline.mean()) / Neural_activity_of_baseline.std()                                
+          Z_score = (Neural_activity_for_behavioral_event - Neural_activity_of_baseline.mean()) / Neural_activity_of_baseline.std()   ## Z-scoring by subtracting the mean of the baseline and dividing by the standard deviation.                             
           Z_score_of_neural_activity_surrounding_events[i].append(Z_score)
+
 
     ### Making sure all the perievents have same length and making a final timevector to use
     ### for all perievents. 
@@ -812,7 +847,6 @@ if Timestamp_import_bool: ### This will perform the perievent analysis, but only
     
     ### Extracting the measures for the statistical analysis. This will be done
     ### for each subject.
-    
     for i, z_score_animal_all_trials in enumerate(Z_score_of_neural_activity_surrounding_events):
         
         z_score_animal_avg = np.mean(z_score_animal_all_trials, axis=0) ### Averaging all trials within each animal
@@ -946,14 +980,11 @@ if Timestamp_import_bool: ### This will perform the perievent analysis, but only
     
     ### Exporting settings for the peri event analysis
     Settings_for_analysis_pd = pd.DataFrame(Settings_for_analysis)
-    ### This creates the path for exporting the csv
-    Path_to_export_settings_for_analysis = Path.joinpath(Data_perievent, "Settings for peri event analysis.csv")
+    Path_to_export_settings_for_analysis = Path.joinpath(Data_perievent, "Settings for peri event analysis.csv") ### This creates the path for exporting the csv
     Settings_for_analysis_pd.to_csv(Path_to_export_settings_for_analysis, index=False)
     
     ### Exporting statistical analysis
-    Statistical_analysis_filtered = {k:v for k, v in Statistical_analysis.items() if len(v) > 0} ### Some of the values for the items in statistical analysys 
-                                                                                                 ### dictionary will be empty (e.g., Z-min values will be empty if we chose Z-max in the Gui.)
-                                                                                                 ### This dictiory comprehension will remove empty key-value pairs.
+    Statistical_analysis_filtered = {k:v for k, v in Statistical_analysis.items() if len(v) > 0} ### Some of the values for the items in statistical analysys                                                                                               ### dictionary will be empty (e.g., Z-min values will be empty if we chose Z-max in the Gui.)                                                                                               ### This dictiory comprehension will remove empty key-value pairs.
     Statistical_analysis_pd = pd.DataFrame(Statistical_analysis_filtered)
     Path_to_export_statistical_analysis = Path.joinpath(Data_perievent, "Statistical_analysis.csv")  ### This creates the path for exporting the csv 
     Statistical_analysis_pd.to_csv(Path_to_export_statistical_analysis, index=False)
