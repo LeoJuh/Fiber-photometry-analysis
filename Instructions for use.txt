@@ -239,31 +239,4 @@ Output from analysis.
   In the "Figures" subfolder of the "Output perievent analysis" are two figures (in tiff format). One figure showing the peri event traces for all subjects
   (corresponding to the data in the "Perievent individual animals" csv file) and another figure showing the peri event trace
   averaged across all subjects (corresponding to the data in the "Perievent averaged trace" csv file).
-   
-
-
-      
-   
-  
-  
- 
-
-		    
-		   
-
-		    
-		   
-	
-
-	   
-
-
-		
-	 
-	
-	  
-	   
-
-	
- 
 
