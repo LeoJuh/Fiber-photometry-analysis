@@ -11,15 +11,91 @@ from pathlib import Path
 import tdt
 import numpy as np
 import re
-import matplotlib as plt
 import time as time1
 import matplotlib
-import numpy as np
 from matplotlib import animation
 from matplotlib.animation import FuncAnimation
-import tdt
-import matplotlib.ticker as plticker
+import scipy.sparse as sparse
+from scipy.sparse.linalg import splu
 import matplotlib.pyplot as plt
+import warnings
+matplotlib.rcParams['text.usetex'] = False
+
+### Setting path to FFMPEG
+
+Current_working_directory = Path(__file__).parent.resolve()
+ffmpeg_path = Path.joinpath(Current_working_directory, "ffmpeg.exe")
+
+matplotlib.rcParams['animation.ffmpeg_path'] = ffmpeg_path
+
+
+### speyediff and whittaker_smooth will bue used as  
+### functions for smoothing. 
+"""
+WHITTAKER-EILERS SMOOTHER in Python 3 using numpy and scipy
+based on the work by Eilers [1].
+    [1] P. H. C. Eilers, "A perfect smoother", 
+        Anal. Chem. 2003, (75), 3631-3636
+coded by M. H. V. Werts (CNRS, France)
+tested on Anaconda 64-bit (Python 3.6.4, numpy 1.14.0, scipy 1.0.0)
+Read the license text at the end of this file before using this software.
+Warm thanks go to Simon Bordeyne who pioneered a first (non-sparse) version
+of the smoother in Python.
+"""
+
+
+def speyediff(N, d, format='csc'):
+    """
+    (utility function)
+    Construct a d-th order sparse difference matrix based on 
+    an initial N x N identity matrix
+    
+    Final matrix (N-d) x N
+    """
+    
+    assert not (d < 0), "d must be non negative"
+    shape     = (N-d, N)
+    diagonals = np.zeros(2*d + 1)
+    diagonals[d] = 1.
+    for i in range(d):
+        diff = diagonals[:-1] - diagonals[1:]
+        diagonals = diff
+    offsets = np.arange(d+1)
+    spmat = sparse.diags(diagonals, offsets, shape, format=format)
+    return spmat
+
+
+def whittaker_smooth(y, lmbd, d):
+    """
+    Implementation of the Whittaker smoothing algorithm,
+    based on the work by Eilers [1].
+    [1] P. H. C. Eilers, "A perfect smoother", Anal. Chem. 2003, (75), 3631-3636
+    
+    The larger 'lmbd', the smoother the data.
+    For smoothing of a complete data series, sampled at equal intervals
+    This implementation uses sparse matrices enabling high-speed processing
+    of large input vectors
+    
+    ---------
+    
+    Arguments :
+    
+    y       : vector containing raw data
+    lmbd    : parameter for the smoothing algorithm (roughness penalty)
+    d       : order of the smoothing 
+    
+    ---------
+    Returns :
+    
+    z       : vector of the smoothed data.
+    """
+
+    m = len(y)
+    E = sparse.eye(m, format='csc')
+    D = speyediff(m, d, format='csc')
+    coefmat = E + lmbd * D.conj().T.dot(D)
+    z = splu(coefmat).solve(y)
+    return z    
 
 def browse_directory():
     
@@ -44,9 +120,23 @@ def assign():
     global Extraction_range
     global Baseline
     global Time_of_event
+    global Title
     
     ### Checking that all the inputted conditions are correct. 
+    if len(Behavioral_event_entry.get()) == 0:
+        tk.messagebox.showerror(title = "Error", message = "The \"Enter time point of event\"y field was left empty, please fill it in.")
+        raise Exception("The Enter time point of event field was left empty, please fill it in.")
     
+    ### We want to check that the data input into the behavioral_event_entry field is numeric
+    ### since it should be a number corresponding to the time of the behavioral event.
+    ### However since the .get() function returns a string (and will always be a non-integer), we have to use a try-except block.
+    try:  
+        float(Behavioral_event_entry.get())
+        
+    except ValueError: 
+        tk.messagebox.showerror(title = "Error", message = "You inputted a non-number into the \"Enter time point of event field\", please input a number instead.")
+        raise Exception("You inputted a non-number into the \"Enter time point of event field\", please input a number instead.")
+     
     ### This checks whether the extraction start time is higher than 0 (i.e., non-negative),
     ### and raises an error if true.
     if float(Extraction_pre_entry.get()) > 0:
@@ -79,6 +169,7 @@ def assign():
     Time_of_event = float(Behavioral_event_entry.get())
     Extraction_range  = (float(Extraction_pre_entry.get()), float(Extraction_post_entry.get()))
     Baseline = (float(base_pre_entry.get()), float(base_post_entry.get()))
+    Title = Title_entry.get()
 
     ### If this point is reached, i.e. the "Click here to finish" button has been clicked 
     ### and no errors have been raised (all inputted data is correct) the GUI will be
@@ -120,7 +211,7 @@ Exit_Button = tk.Button(mGui, text="Click here to finish", command=assign)
 ### Placing buttons and checkboxes
 Text_path.place(relx=0.52, rely=0.01, relwidth=0.42, relheight=0.09)
 browse_Button.place(relx=0.005, rely=0.01, relwidth=0.5, relheight=0.09)
-Exit_Button.place(relx=0.31, rely=0.89, relwidth=0.3, relheight=0.10)
+Exit_Button.place(relx=0.31, rely=0.90, relwidth=0.28, relheight=0.088)
 Behavioral_event_label.place(relx=0.02, rely=0.19, relwidth=0.37, relheight=0.08) 
 Behavioral_event_entry.place(relx=0.47, rely=0.19, relwidth=0.2, relheight=0.09)   
 Extraction_to_label.place(relx=0.555, rely=0.37, relwidth=0.03, relheight=0.04)
@@ -143,6 +234,14 @@ Start = 5
 ### Getting paths using pathlibs Path function
 path_to_experiment = Path(path_to_experiment)
 path_str = str(path_to_experiment)
+
+### Getting child and parent name of folder to be used
+### for the output mp4 file name
+Subject_name = path_to_experiment.name
+Exp_name = path_to_experiment.parent.name
+
+### Joining experiment path to the output file name to export video later
+Path_for_exporting_video = Path.joinpath(path_to_experiment.parent, f"{Exp_name}, {Subject_name} animation.mp4")
 
 ### Reading selected tdt file
 subject_data = tdt.read_block(path_to_experiment, t1 = Start)
@@ -244,10 +343,10 @@ else:
             Entry_legend_name_sensor_1_label = tk.Label(mGui, text= f"Enter legend name \n for sensor {Sensor_names_no_duplicates[0]}",font=("Arial", 10), anchor="w")
             Entry_legend_name_sensor_2_label = tk.Label(mGui, text= f"Enter legend name \n for sensor {Sensor_names_no_duplicates[1]}", font=("Arial", 10), anchor="w")                                            
             
-            Entry_legend_name_sensor_1_label.place(relx=0.05, rely=0.59, relwidth=0.37, relheight=0.12)
-            Entry_legend_name_sensor_2_label.place(relx=0.05, rely=0.78, relwidth=0.37, relheight=0.12)
-            Entry_legend_name_sensor_1.place(relx=0.53, rely=0.62, relwidth=0.25, relheight=0.065)
-            Entry_legend_name_sensor_2.place(relx=0.53, rely=0.81, relwidth=0.25, relheight=0.065)
+            Entry_legend_name_sensor_1_label.place(relx=0.05, rely=0.56, relwidth=0.37, relheight=0.12)
+            Entry_legend_name_sensor_2_label.place(relx=0.05, rely=0.75, relwidth=0.37, relheight=0.12)
+            Entry_legend_name_sensor_1.place(relx=0.53, rely=0.59, relwidth=0.25, relheight=0.065)
+            Entry_legend_name_sensor_2.place(relx=0.53, rely=0.78, relwidth=0.25, relheight=0.065)
                                                             
         def check_checkboxes():
             if Sensor_1_bool.get() and Sensor_2_bool.get():
@@ -301,15 +400,14 @@ else:
             mGui.quit()
 
         Exit_Button = tk.Button(mGui, text="Click here to finish", command=extract_values)
-        Exit_Button.place(relx=0.31, rely=0.89, relwidth=0.3, relheight=0.10)
+        Exit_Button.place(relx=0.31, rely=0.92, relwidth=0.36, relheight=0.077)
 
 
-    mGui.mainloop()
+        mGui.mainloop()
 
 for i, sensor in enumerate(Sensor_selection):
     if not sensor:
         del Sensor_names_no_duplicates[i]
-
 
 
 ### Empty lists
@@ -334,7 +432,7 @@ Timevectors_calcium_dependent_lst = []
 ### Creating time vectors for calcium dependent signals
 for sampling_rate_calcium_dependent, calcium_dependent_signal in zip(Sampling_rate_calcium_dependent_lst, calcium_dependent_signal_lst):   
     
-       
+     
     ### The timevector is created by generating, using numpy linspace (https://numpy.org/doc/stable/reference/generated/numpy.linspace.html), an vector with evenly spaced numbers. 
     ### Initially, for each signal (465 or 405) each data point in the signals will have one data point in the timevector, since we´ve set end value the same as the number of time vector datapoints to be generated
     ### For example, for one signal with 6000 data points, the time vector will consist of 6000 datapoints with integers. 
@@ -345,7 +443,7 @@ for sampling_rate_calcium_dependent, calcium_dependent_signal in zip(Sampling_ra
     Timevector_calcium_dependent = Start + np.linspace(1, len(calcium_dependent_signal), len(calcium_dependent_signal)) / sampling_rate_calcium_dependent
     
     ### Appending Timevector_calcium_dependent
-    Timevectors_calcium_dependent_lst.append(Timevectors_calcium_dependent)
+    Timevectors_calcium_dependent_lst.append(Timevector_calcium_dependent)
     
     ### Correcting calcium dependent signal using calcium independent signal 
 
@@ -362,9 +460,14 @@ for sampling_rate_calcium_dependent, calcium_dependent_signal in zip(Sampling_ra
 ### This error is raised due to the fitted calcium independent trace being sensitive to small changes in the data.
 ### It seems to be raised for all samples, even if the fit is completely acceptable by manual observation.
 ### Thus, the code below silences this warning since it in our case doesn´t seem to provide any valuable information.
-Corrected_calcium_dependent_lst.append()
+Corrected_calcium_dependent_lst = []
 
-for calcium_independent, calcium_dependent in zip(calcium_independent_signal_lst, calcium_dependent_signal_lst):
+### This error is raised due to the fitted calcium independent trace being sensitive to small changes in the data.
+### It seems to be raised for all samples, even if the fit is completely acceptable by manual observation.
+### Thus, the code below silences this warning since it in our case doesn´t seem to provide any valuable information.
+warnings.simplefilter('ignore', np.RankWarning)
+
+for calcium_independent_signal, calcium_dependent_signal in zip(calcium_independent_signal_lst, calcium_dependent_signal_lst):
 
     
     fitting_independent_to_dependent = np.polyfit(calcium_independent_signal, calcium_dependent_signal, 1) ### Using polyfit to the first degree.
@@ -375,23 +478,15 @@ for calcium_independent, calcium_dependent in zip(calcium_independent_signal_lst
     Corrected_calcium_dependent_lst.append(Corrected_calcium_dependent)
 
 ### Z-scoring 
-
-
-
-
-
-
 Z_score_events_lst = []
 Index_for_start_recording = []
 Timevectors_for_behavioral_events_lst = []
-
-
 
 ### In this code, the neural activty surrounding the event will be extracted and converted to Z-score.
 ### The code will also extract the index for the neural activity which occured at 5 seconds after the first data point in the 
 ### extracted neural activity. This will be used to plot the starting activity from 0-5 seconds in the first frame.
 ### I.e., the animation will start with the first 5 seconds initially being plotted.
-    
+  
 for i, (timevector_calcium_dependent, Corrected_calcium_dependent) in enumerate(zip(Timevectors_calcium_dependent_lst, Corrected_calcium_dependent_lst)):
     
     ### The activity surrounding each behavioral event will be gathered using numpy.where(https://numpy.org/doc/stable/reference/generated/numpy.where.html). 
@@ -399,9 +494,8 @@ for i, (timevector_calcium_dependent, Corrected_calcium_dependent) in enumerate(
     ### firstly higher than the time point of the behavioral event - the start time of the total extraction range AND lower than the time point of the behavioral event + the end time of the total extraction range.  
     ### Why the first condition "(timevector_calcium_dependent > (Time_of_event + Extraction_range[0] - 5))" in the np.where function also includes a - 5 subtraction is because we want to get 5-seconds before 
     ### the user specified extraction range to plot as the starting position in the animation. 
-    
     index_for_behavioral_event = np.where((timevector_calcium_dependent > (Time_of_event + Extraction_range[0] - 5)) & ((timevector_calcium_dependent < Time_of_event + Extraction_range[1])))
-    
+       
     ### These indeces are thereafter used to select the signal data points in the corrected calcium dependent signal.
     ### This works since the timevector and the corrected calcium signal share the same indices.
     ### To explain it a bit further, to find the signal corresponding to a specific time point in the timevector, 
@@ -410,98 +504,192 @@ for i, (timevector_calcium_dependent, Corrected_calcium_dependent) in enumerate(
     
     ### Creating a timevector for the behavioral event. 
     ### Yet again, this includes the -5 subtraction for the initial plotted 5-second neural activity in the animation.
-    Timevector_for_behavioral_event = Extraction_range[0] - 5 + np.linspace(1, len(Neural_activity_for_behavioral_event), len(Neural_activity_for_behavioral_event))/ Sampling_rate_calcium_dependent[i]
+    Timevector_for_behavioral_event = Extraction_range[0] - 5 + np.linspace(1, len(Neural_activity_for_behavioral_event), len(Neural_activity_for_behavioral_event))/ Sampling_rate_calcium_dependent_lst[i]
     
+    ### Getting the index for the baseline using the np.where function
+    ind_baseline = np.where((Timevector_for_behavioral_event > Baseline[0]) & (Timevector_for_behavioral_event < Baseline[1]))
     
+    ### Z-scoring by subtracting the neural activity of the event with the mean neural activity of the baseline, 
+    ### and lastly dividing the subtraction product by the std of the 
+    Z_score_event = (Neural_activity_for_behavioral_event -  Neural_activity_for_behavioral_event[ind_baseline].mean()) /  Neural_activity_for_behavioral_event[ind_baseline].std()
+    
+    ### Smoothing Z_score_event using whittaker_smoothing
+    Z_score_smoothed = whittaker_smooth(Z_score_event, lmbd=10000000, d = 2)
+    
+    ### Since we want the animation to have already plotted 5 seconds of neural activity
+    ### we will also get the index corresponding to 5s. In the animation
+    ### we will then start plotting from that timestamp.
+    ### This index is found by using one condition (getting all indexes)
+    ### where there corresponding values in the time vector are bigger than 
+    ### 5. Thereafter, we are getting the min value, which will be the 
+    ### value that is the closest to five. 
+    min_index = np.where(Timevector_for_behavioral_event > Extraction_range[0])[0].min()
 
-    
-    ind_baseline = np.where((Timevector_beh_event > Baseline[0]) & (Timevector_beh_event < Baseline[1]))
-    Z_score_event = (Neural_activity_event - Neural_activity_event[ind_baseline].mean()) / Neural_activity_event[ind_baseline].std()
-    
-    min_index = np.where(Timevector_beh_event > Extraction_range[0])[0].min()
-    
-    
-    
-    ### Appending to lists
+    ### Appending data to lists
     Timevectors_for_behavioral_events_lst.append(Timevector_for_behavioral_event)
     Index_for_start_recording.append(min_index)
-    Z_score_events_lst.append(Z_score_event)
+    Z_score_events_lst.append(Z_score_smoothed)
     
+### This processing is done so that if we have neural activty traces 
+### from more than one sensor, they will have the same length.  
 min_z_score = np.min([len(Z_score) for Z_score in Z_score_events_lst])
 Z_score_events_lst = [Z_score[:min_z_score] for Z_score in Z_score_events_lst]
 
-
 start_time = time1.time()
 
-plt.plot(Timevector_beh_event ,Z_score_event)
+fig, axes = plt.subplots(1, 1, figsize=(10,5))
 
-matplotlib.rcParams['animation.ffmpeg_path'] = r"C:\Users\aboo_\Desktop\ffmpeg.exe"
+colors = ["green", "red"]
+Num_frames = int(len(Z_score_events_lst[0][Index_for_start_recording[0]:]) / 51)
 
-### initiate figure
-fig, axes = plt.subplots(nrows = 1, ncols = 1, figsize = (10,8))
-axes.set_ylim(-2, 4.0)
+### Setting start and end x_val (time) points for the plot.
+### These will be updated in the animate function.
+Start = Extraction_range[0] -5
+End = Extraction_range[0] -5 + 10   
 
-Num_frames = int(len(Z_score_events_lst[0][Index_for_start_recording[0]:]) / 50)
-#axes.yaxis.set_major_locator(loc)
-#axes.xaxis.set_major_locator(loc)
+
+### Creating list2D objects for plotting traces
+### The reason this is done in a for loop
+### is that it is compatible with data 
+### from both one and two traces. 
+artist_lst = []
+
+for i in range(len(Sensor_names_no_duplicates)):
+    
+    ### Creating an line object. The line2D 
+    ### object returns an tuple but we are
+    ### only interested in the first element of the tuple (the trace)
+    ### we will unpack the tuple and select the first element,
+    ### which is done by setting the comma.
+    line, = axes.plot([], [], lw=2, color=colors[i])
+     
+    ### Appending line object to artist_lst   
+    artist_lst.append(line)    
+
+### If there are two selected sensors and both the entry boxes are filled in,
+### then we will set them as legend names. 
+if (len(Sensor_names_no_duplicates) == 2) & (len(legend_names[0]) > 0) & (len(legend_names[1]) > 0):
+
+    axes.legend(artist_lst, 
+                legend_names,
+                frameon=False, 
+                fontsize=15, 
+                loc="upper right")
+     
+### Changing settings for matplotlib animation plot.
 axes.spines["right"].set_visible(False)
 axes.spines["top"].set_visible(False)
-#axes.spines["bottom"].set_visible(False)
-axes.set_ylabel("Z-score", fontsize=25, labelpad=15)
+axes.spines["bottom"].set_visible(False)
+axes.set_ylabel("Z-score", fontsize=20, labelpad=15)
+axes.set_xlim(Start, End)
 
+
+### Getting max and min values for setting y-lim 
+max_Z_score = np.max([np.max(Z_score_event) for Z_score_event in Z_score_events_lst])
+min_Z_score = np.min([np.min(Z_score_event) for Z_score_event in Z_score_events_lst])
+axes.set_ylim(min_Z_score-2, max_Z_score+2)
+
+if len(Title) > 0:
+    axes.set_title(Title, fontsize = 20)
+
+### Tick params for x-ticks and y-ticks
 axes.tick_params(
-    axis='x',          # changes apply to the x-axis
-    which='both',      # both major and minor ticks are affected
-    bottom=False,      # ticks along the bottom edge are off
-    top=False,         # ticks along the top edge are off
-    labelbottom=False)
+    axis="x",
+    which="both",      
+   bottom=False,      
+    top=False,         
+   labelbottom=False)
 
 axes.tick_params(
     axis="y",
     which="major",
-    labelsize="20")
+    labelsize="15")
 
-time = [Timevectors_beh_events_lst[0][:Index_for_start_recording[0]]]
-time = list(np.ravel(time))
+### Empty lists used for animation
+x_values_to_plot_lst = []
+y_values_to_plot_lst = []
+x_values_for_animation_lst = []
+y_values_for_animation_lst = []
 
-z_score_y_value = [Z_score_events_lst[0][:Index_for_start_recording[0]]]
-z_score_y_value = list(np.ravel(z_score_y_value))
+### In this for loop the data will be split into two different types
+### of lists. The first type, called x/y_values_start_lst,
+### contains data from 0-5 seconds and will all be plotted
+### in the first frame. The second type, called x/y_values_for_animation_lst
+### contain data that will be progessively plotted in each frame.
+for i in range(len(Sensor_names_no_duplicates)):
+       
+    ### Getting the index at 5s (start of animation)
+    Index_start = Index_for_start_recording[i]
+    
+    ### Inserting the five first seconds in the x_value list and y_val list
+    ### The list is inserted and then flattened using np.ravel.
+    x_val_start = [Timevectors_for_behavioral_events_lst[i][:Index_start]]
+    x_val_start_flattened = list(np.ravel(x_val_start))
+    y_val_start = [Z_score_events_lst[i][:Index_start]]
+    y_val_start_flattened = list(np.ravel(y_val_start))
 
-Start = Extraction_range[0] -5
-End = Extraction_range[0] -5 + 10
-axes.set_xlim(Start, End)
+    ### This selects the x_values and y_values that
+    ### occurs after the Start time (5 seconds)
+    ### and are thus the values that will be progressively
+    ### plotted in the animation. 
+    x_values_to_plot = Timevectors_for_behavioral_events_lst[i][Index_start:]
+    y_values_to_plot = Z_score_events_lst[i][Index_start:]
 
+    ### Appending data
+    x_values_for_animation_lst.append(x_val_start_flattened)
+    y_values_for_animation_lst.append(y_val_start_flattened)
+    x_values_to_plot_lst.append(x_values_to_plot)
+    y_values_to_plot_lst.append(y_values_to_plot)
 
-line, = axes.plot([Timevectors_beh_events_lst[0][:Index_for_start_recording[0]]], [Z_score_events_lst[0][:Index_for_start_recording[0]]]], lw=2)
+### This function will be used to plot the base frames and 
+### also represents the start frame.
+def init():
+    
+    for i in range(len(Sensor_names_no_duplicates)):  
+        ### Setting 0-5 seconds data
+        artist_lst[i].set_data(x_values_for_animation_lst[i], y_values_for_animation_lst[i])
+        
+    return artist_lst
 
+### This is the function that will be used to plot each frame 
 def animate(i):
     
     global Start
     global End
-    global Time_video
 
+    ### Firstly, we append new values to the x/y_values_for_animation_lst  and
+    ### lists. To limit frames and save time
+    ### required to plot the animation, we will only plot
+    ### the 51th data points, hence we index the plotting lsts
+    ### with i*51 
+    for j in range(len(Sensor_names_no_duplicates)):
+            
+        x_values_for_animation_lst[j].append(x_values_to_plot_lst[j][i*51])
+        y_values_for_animation_lst[j].append(y_values_to_plot_lst[j][i*51]) 
 
-
-    lien = 
-    z_score_y_value.append((Z_score_events_lst[0][Index_for_start_recording[0] + (i*50)]))
-    time.append(Timevectors_beh_events_lst[0][Index_for_start_recording[0] + (i*50)])
-
-    Start += Timevectors_beh_events_lst[0][Index_for_start_recording[0] + (i*50)] - Timevectors_beh_events_lst[0][Index_for_start_recording[0] + ((i-1)*50)]
-    End += Timevectors_beh_events_lst[0][Index_for_start_recording[0] + (i*50)] - Timevectors_beh_events_lst[0][Index_for_start_recording[0] + ((i-1)*50)]
-    axes.set_xlim(Start, End)
-
-    #axes.yaxis.set_major_locator(loc)
-    axes.plot(time, z_score_y_value, color="green", linewidth=3)
-
-anim = FuncAnimation(fig, func=animate, frames=int(Num_frames), interval=20, blit=True)
-FFwriter=animation.FFMpegWriter(fps=int(Num_frames/abs(Extraction_range[1]-(Extraction_range[0]))), bitrate=2000)
-anim.save(r'C:/Users/aboo_/Desktop/basic_animation.mp4', writer=FFwriter, dpi = 500)
-
-end_time = time1.time()
-
-elapsed_time = end_time - start_time
-print("Time taken: ", elapsed_time)    
+        artist_lst[j].set_data(x_values_for_animation_lst[j], y_values_for_animation_lst[j])
     
-    
-    
-    
+    ### Thereafter, after the first frame, we will update
+    ### the start and end variables to be used to set the 
+    ### new x-limits. 
+    if i > 0:
+        
+        ### This sets the Time_diff that will be updated.
+        ### This time-diff is equal to the difference in time
+        ### between the plotted y-value in the current frame
+        ### and the plotted y-value in the previous frame.
+        Time_diff = x_values_to_plot[i*51] - x_values_to_plot[(i-1)*51]
+        Start +=  Time_diff
+        End   +=  Time_diff
+
+        ### Setting the x-lim with updated start and end x-limits 
+        axes.set_xlim(Start, End)
+        
+    return artist_lst
+
+### Creating the animation
+anim = FuncAnimation(fig, func=animate, frames=int(Num_frames), init_func = init, blit=True)
+### Setting parameters for the ffmpeg writer
+FFwriter=animation.FFMpegWriter(fps=int(Num_frames/abs(Extraction_range[1]-(Extraction_range[0]))))
+### Saving animation
+anim.save(Path_for_exporting_video, writer=FFwriter, dpi = 200)
