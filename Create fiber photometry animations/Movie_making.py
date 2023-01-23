@@ -11,7 +11,6 @@ from pathlib import Path
 import tdt
 import numpy as np
 import re
-import time as time1
 import matplotlib
 from matplotlib import animation
 from matplotlib.animation import FuncAnimation
@@ -29,7 +28,7 @@ ffmpeg_path = Path.joinpath(Current_working_directory, "ffmpeg.exe")
 matplotlib.rcParams['animation.ffmpeg_path'] = ffmpeg_path
 
 
-### speyediff and whittaker_smooth will bue used as  
+### speyediff and whittaker_smooth will be used as  
 ### functions for smoothing. 
 """
 WHITTAKER-EILERS SMOOTHER in Python 3 using numpy and scipy
@@ -97,6 +96,10 @@ def whittaker_smooth(y, lmbd, d):
     z = splu(coefmat).solve(y)
     return z    
 
+
+### browse_directory() and assign() are functions that will be used 
+### for the initial GUI.
+
 def browse_directory():
     
     """This function allows the user to select the path 
@@ -117,65 +120,88 @@ def assign():
     
     ### Variables that are going to be used outside this function are assigned as global.
     global Time_range_movie 
-    global Extraction_range
+    global Duration
     global Baseline
-    global Time_of_event
+    global Start_time
     global Title
     
-    ### Checking that all the inputted conditions are correct. 
-    if len(Behavioral_event_entry.get()) == 0:
-        tk.messagebox.showerror(title = "Error", message = "The \"Enter time point of event\"y field was left empty, please fill it in.")
-        raise Exception("The Enter time point of event field was left empty, please fill it in.")
+    ### In the below section will the input be checked if it 
+    ### fullfills the conditions. 
     
-    ### We want to check that the data input into the behavioral_event_entry field is numeric
+    ### Checking if "Enter start time of animation" input field is empty and 
+    ### raises an error if true
+    if len(Start_time_entry.get()) == 0:
+        tk.messagebox.showerror(title = "Error", message = "The \"Enter start time of animation\" field was left empty, please fill it in.")
+        raise Exception("The \"Enter start time of animation\" field was left empty, please fill it in.")
+    
+    ### We want to check that the data input into the "Enter start time of animation" field is numeric
     ### since it should be a number corresponding to the time of the behavioral event.
     ### However since the .get() function returns a string (and will always be a non-integer), we have to use a try-except block.
     try:  
-        float(Behavioral_event_entry.get())
+        float(Start_time_entry.get())
         
     except ValueError: 
-        tk.messagebox.showerror(title = "Error", message = "You inputted a non-number into the \"Enter time point of event field\", please input a number instead.")
-        raise Exception("You inputted a non-number into the \"Enter time point of event field\", please input a number instead.")
-     
-    ### This checks whether the extraction start time is higher than 0 (i.e., non-negative),
-    ### and raises an error if true.
-    if float(Extraction_pre_entry.get()) > 0:
-        tk.messagebox.showerror(title = "Error", message = "The left field of the extraction time range fields needs to be lower than 0")
-        raise Exception("The left field of the extraction time range fields needs to be lower than 0")
-    
-    ### This checks whether the extraction endtime is lower than 0 (i.e., non-negative),
-    ### and raises an error if true.
-    if float(Extraction_post_entry.get()) < 0:
-        tk.messagebox.showerror(title = "Error", message = "The right field of the extraction time range fields needs to be higher than 0")
-        raise Exception("The right field of the extraction time range fields needs to be higher than 0")
+        tk.messagebox.showerror(title = "Error", message = "You inputted a non-number into the \"Enter start time of animation\", please input a number instead.")
+        raise Exception("You inputted a non-number into the \"Enter start time of animation\", please input a number instead.")
 
-    ### This checks whether the baseline start time is lower than the total range extraction start time (i.e., baseline to be used to normalize peri event includes data outside the peri event range),
-    ### and raises an error if true.
-    if float(Extraction_pre_entry.get()) > float(base_pre_entry.get()):
-        tk.messagebox.showerror(title = "Error", message = "The start time point of the baseline is outside of the extraction time range")
-        raise Exception("The start time point of the baseline is outside of the extraction time range")
+    ### Checking if "Enter animation duration" field is empty and 
+    ### raises an error if true
+    if len(Duration_entry.get()) == 0:
+        tk.messagebox.showerror(title = "Error", message = "The \"Enter duration of animation\" field was left empty, please fill it in.")
+        raise Exception("The \"Enter duration of animation\" field was left empty, please fill it in.")
     
-    ### This checks whether the baseline end time is higher than the total range extraction end time (i.e., baseline to be used to normalize peri event includes data outside the peri event range),
-    ### and raises an error if true. 
-    if float(Extraction_post_entry.get()) < float(base_post_entry.get()):
-        tk.messagebox.showerror(title = "Error", message = "The end time point of the baseline is outside of the extraction time range")
-        raise Exception("The end time point of the baseline is outside of the extraction time range")
+    ### We want to check that the data input into the "Enter animation duration" field is numeric
+    ### since it should be a number corresponding to the duration of the animation.
+    ### However since the .get() function returns a string (and will always be a non-integer), we have to use a try-except block.
+    try:  
+        float(Duration_entry.get())
+        
+    except ValueError: 
+        tk.messagebox.showerror(title = "Error", message = "You inputted a non-number into the \"Enter duration of animation\" field, please input a number instead.")
+        raise Exception("You inputted a non-number into the \"Enter duration of animation\" field, please input a number instead.") 
+           
+    ### Checking if any of the entry fields for the baseline time range are empty.
+    if (len(base_pre_entry.get()) == 0) or (len(base_post_entry.get()) == 0):
+        tk.messagebox.showerror(title = "Error", message = "Atleast one of the The \"Enter baseline time range:\" entry fields was left empty, please fill it in.")
+        raise Exception("Atleast one of the The \"Enter baseline time range:\" entry field was left empty, please fill it in.")
+    
+    ### We want to check that the data input into the "Enter baseline time range time of animation" fields are numeric
+    ### since it should be a number corresponding to the time range of the baseline.
+    ### However since the .get() function returns a string (and will always be a non-integer), we have to use a try-except block.
+    try:  
+        float(base_pre_entry.get())
+        float(base_post_entry.get())
+        
+    except ValueError: 
+        tk.messagebox.showerror(title = "Error", message = "You inputted a non-number into atleast one of the  \"Enter baseline time range\", entry fields, please input a number instead.")
+        raise Exception("You inputted a non-number into the \"Enter baseline time range\", please input a number instead.")
+
+    ### This checks whether the duration is lower than 0 (i.e., non-negative),
+    ### and raises an error if true.
+    if float(Duration_entry.get()) < 0:
+        tk.messagebox.showerror(title = "Error", message = "The inputted Duration needs to be higher than 0")
+        raise Exception("The right field of the extraction time range fields needs to be higher than 0")
+        
+    ### This checks whether the start time of the baseline is lower than 0 and raises an error if true. 
+    if float(base_pre_entry.get()) < 0:
+        tk.messagebox.showerror(title = "Error", message = "The baseline start time point needs to be 0 or higher")
+        raise Exception("The baseline start time point needs to be 0 or higher")
     
     ### This checks whether the start time of the baseline is higher than the end time of the baseline, and raises an error if true. 
     if float(base_pre_entry.get()) > float(base_post_entry.get()):
         tk.messagebox.showerror(title = "Error", message = "The end time point of the baseline is lower than the baseline start time point")
         raise Exception("The end time point of the baseline is lower than the baseline start timepoint")
-     
-    Time_of_event = float(Behavioral_event_entry.get())
-    Extraction_range  = (float(Extraction_pre_entry.get()), float(Extraction_post_entry.get()))
+    
+    ### Extracting the values
+    Start_time = float(Start_time_entry.get())
+    Duration  = float(Duration_entry.get())
     Baseline = (float(base_pre_entry.get()), float(base_post_entry.get()))
     Title = Title_entry.get()
 
     ### If this point is reached, i.e. the "Click here to finish" button has been clicked 
     ### and no errors have been raised (all inputted data is correct) the GUI will be
     ### closed (mGui.destroy) and the loop will be broken (mGui.quit()). This
-    ### will allow for the code below the mGui.mainloop() to be run.
-    
+    ### will allow for the code below the mGui.mainloop() to be run.   
     mGui.destroy()       
     mGui.quit()
     
@@ -186,23 +212,20 @@ mGui = tk.Tk()
 mGui.geometry("400x250+500+300")
 mGui.title("Choosing parameters for Movie making")
 
-### Creating entry box for path.
+### Creating entry boxes.
 Text_path = tk.Entry(mGui)
-Behavioral_event_entry = tk.Entry(mGui)
-Extraction_pre_entry = tk.Entry(mGui)
-Extraction_post_entry = tk.Entry(mGui)
+Start_time_entry = tk.Entry(mGui)
+Duration_entry = tk.Entry(mGui)
 base_pre_entry = tk.Entry(mGui)
 base_post_entry = tk.Entry(mGui)
 Title_entry = tk.Entry(mGui)
 
 ### Creating labels
-Behavioral_event_label = tk.Label(mGui, text="Enter time point of event:",font=("Arial", 10), anchor="w")
-Extraction_label = tk.Label(mGui, text="Enter extraction time range:",font=("Arial", 10), anchor="w")
+Start_time_label = tk.Label(mGui, text="Enter start time of animation:",font=("Arial", 10), anchor="w")
+Duration_label = tk.Label(mGui, text="Enter duration of animation:",font=("Arial", 10), anchor="w")
 base_label = tk.Label(mGui, text="Enter baseline time range:",font=("Arial", 10), anchor="w")
-Extraction_to_label = tk.Label(mGui, text="to", font=("Arial", 10))
 base_to_label = tk.Label(mGui, text="to", font=("Arial", 10))
-Title_entry_label = tk.Label(mGui, text="Title for video:", font=("Arial", 10))
-
+Title_entry_label = tk.Label(mGui, text="Enter title for video:", font=("Arial", 10))
 
 ### Creating browse and exit button
 browse_Button = tk.Button(mGui, text="Click here to import subject PATH:", command=browse_directory)
@@ -212,18 +235,16 @@ Exit_Button = tk.Button(mGui, text="Click here to finish", command=assign)
 Text_path.place(relx=0.52, rely=0.01, relwidth=0.42, relheight=0.09)
 browse_Button.place(relx=0.005, rely=0.01, relwidth=0.5, relheight=0.09)
 Exit_Button.place(relx=0.31, rely=0.90, relwidth=0.28, relheight=0.088)
-Behavioral_event_label.place(relx=0.02, rely=0.19, relwidth=0.37, relheight=0.08) 
-Behavioral_event_entry.place(relx=0.47, rely=0.19, relwidth=0.2, relheight=0.09)   
-Extraction_to_label.place(relx=0.555, rely=0.37, relwidth=0.03, relheight=0.04)
-Extraction_label.place(relx=0.02, rely=0.36, relwidth=0.41, relheight=0.07)  
-Extraction_pre_entry.place(relx=0.47, rely=0.36, relwidth=0.07, relheight=0.07)
-Extraction_post_entry.place(relx=0.61, rely=0.36, relwidth=0.07, relheight=0.08)
-base_label.place(relx=0.02, rely=0.48, relwidth=0.39, relheight=0.08)
-base_pre_entry.place(relx=0.47, rely=0.48, relwidth=0.07, relheight=0.07)
-base_post_entry.place(relx=0.61, rely=0.48, relwidth=0.07, relheight=0.07)
-base_to_label.place(relx=0.555, rely=0.49, relwidth=0.03, relheight=0.04)
-Title_entry.place(relx=0.47, rely=0.60, relwidth=0.21, relheight=0.07)
-Title_entry_label.place(relx=0.20, rely=0.61, relwidth=0.20, relheight=0.04)
+Start_time_label.place(relx=0.02, rely=0.19, relwidth=0.43, relheight=0.08) 
+Start_time_entry.place(relx=0.51, rely=0.19, relwidth=0.2, relheight=0.09)   
+Duration_label.place(relx=0.04, rely=0.34, relwidth=0.41, relheight=0.07)  
+Duration_entry.place(relx=0.51, rely=0.34, relwidth=0.2, relheight=0.09)
+base_label.place(relx=0.055, rely=0.48, relwidth=0.39, relheight=0.08)
+base_pre_entry.place(relx=0.51, rely=0.48, relwidth=0.07, relheight=0.09)
+base_post_entry.place(relx=0.65, rely=0.48, relwidth=0.07, relheight=0.09)
+base_to_label.place(relx=0.595, rely=0.505, relwidth=0.03, relheight=0.04)
+Title_entry.place(relx=0.51, rely=0.61, relwidth=0.21, relheight=0.09)
+Title_entry_label.place(relx=0.165, rely=0.62, relwidth=0.27, relheight=0.04)
 
 ### Blocking code after .mainloop until mGui has been destroyed and quitted
 mGui.mainloop()
@@ -281,6 +302,7 @@ else:
         
         Sensor = Sensor_names_no_duplicates[0]
         Sensor_selection = [True]
+    
     ### If there are two sensor names, it means the recording was done with two
     ### fibers. In that case, a GUI created by tkinter will '
     ### pop up, which enables the user to select what sensor to use for the 
@@ -456,7 +478,6 @@ for sampling_rate_calcium_dependent, calcium_dependent_signal in zip(Sampling_ra
 ### then get the corrected calcium-dependent signal which we append into the 
 ### Correct_calcium_dep lst. 
     
-
 ### This error is raised due to the fitted calcium independent trace being sensitive to small changes in the data.
 ### It seems to be raised for all samples, even if the fit is completely acceptable by manual observation.
 ### Thus, the code below silences this warning since it in our case doesn´t seem to provide any valuable information.
@@ -486,15 +507,14 @@ Timevectors_for_behavioral_events_lst = []
 ### The code will also extract the index for the neural activity which occured at 5 seconds after the first data point in the 
 ### extracted neural activity. This will be used to plot the starting activity from 0-5 seconds in the first frame.
 ### I.e., the animation will start with the first 5 seconds initially being plotted.
-  
 for i, (timevector_calcium_dependent, Corrected_calcium_dependent) in enumerate(zip(Timevectors_calcium_dependent_lst, Corrected_calcium_dependent_lst)):
     
     ### The activity surrounding each behavioral event will be gathered using numpy.where(https://numpy.org/doc/stable/reference/generated/numpy.where.html). 
     ### where indices fullfilling certain critiries will be extracted. In our case, we select the indices of the timevector where the data points are 
-    ### firstly higher than the time point of the behavioral event - the start time of the total extraction range AND lower than the time point of the behavioral event + the end time of the total extraction range.  
-    ### Why the first condition "(timevector_calcium_dependent > (Time_of_event + Extraction_range[0] - 5))" in the np.where function also includes a - 5 subtraction is because we want to get 5-seconds before 
-    ### the user specified extraction range to plot as the starting position in the animation. 
-    index_for_behavioral_event = np.where((timevector_calcium_dependent > (Time_of_event + Extraction_range[0] - 5)) & ((timevector_calcium_dependent < Time_of_event + Extraction_range[1])))
+    ### firstly higher than the time point of the behavioral event subtracted with 5 AND lower than the time point of the behavioral event + the duration of the video  
+    ### Why the first condition "(timevector_calcium_dependent > (Time_of_event + - 5))" in the np.where function also includes a -5 subtraction is because we want to get 5-seconds before 
+    ### the user specified extraction range to plot in starting position in the animation, so the animation starts with data already plotted. 
+    index_for_behavioral_event = np.where((timevector_calcium_dependent > Start_time - 5) & ((timevector_calcium_dependent < Start_time + Duration)))
        
     ### These indeces are thereafter used to select the signal data points in the corrected calcium dependent signal.
     ### This works since the timevector and the corrected calcium signal share the same indices.
@@ -504,7 +524,7 @@ for i, (timevector_calcium_dependent, Corrected_calcium_dependent) in enumerate(
     
     ### Creating a timevector for the behavioral event. 
     ### Yet again, this includes the -5 subtraction for the initial plotted 5-second neural activity in the animation.
-    Timevector_for_behavioral_event = Extraction_range[0] - 5 + np.linspace(1, len(Neural_activity_for_behavioral_event), len(Neural_activity_for_behavioral_event))/ Sampling_rate_calcium_dependent_lst[i]
+    Timevector_for_behavioral_event = - 5 + np.linspace(1, len(Neural_activity_for_behavioral_event), len(Neural_activity_for_behavioral_event))/ Sampling_rate_calcium_dependent_lst[i]
     
     ### Getting the index for the baseline using the np.where function
     ind_baseline = np.where((Timevector_for_behavioral_event > Baseline[0]) & (Timevector_for_behavioral_event < Baseline[1]))
@@ -521,9 +541,10 @@ for i, (timevector_calcium_dependent, Corrected_calcium_dependent) in enumerate(
     ### we will then start plotting from that timestamp.
     ### This index is found by using one condition (getting all indexes)
     ### where there corresponding values in the time vector are bigger than 
-    ### 5. Thereafter, we are getting the min value, which will be the 
-    ### value that is the closest to five. 
-    min_index = np.where(Timevector_for_behavioral_event > Extraction_range[0])[0].min()
+    ### 0. This is because all the data that we want to plot are plotted after 
+    ### the zero-second mark. Thereafter, we are getting the min value, which will be the 
+    ### index-value that is the closest to the zero-second mark. 
+    min_index = np.where(Timevector_for_behavioral_event > 0)[0].min()
 
     ### Appending data to lists
     Timevectors_for_behavioral_events_lst.append(Timevector_for_behavioral_event)
@@ -535,18 +556,23 @@ for i, (timevector_calcium_dependent, Corrected_calcium_dependent) in enumerate(
 min_z_score = np.min([len(Z_score) for Z_score in Z_score_events_lst])
 Z_score_events_lst = [Z_score[:min_z_score] for Z_score in Z_score_events_lst]
 
-start_time = time1.time()
-
+### Creating figure and axes object for figure to be used in the animation
 fig, axes = plt.subplots(1, 1, figsize=(10,5))
 
+### Setting colors for traces
 colors = ["green", "red"]
-Num_frames = int(len(Z_score_events_lst[0][Index_for_start_recording[0]:]) / 51)
+
+### Calculating number of frames that should be plotted in animation. Since we are only plotting each 29th datapoint
+### (to limit time taken to generate animation), we are getting the number of frames
+### by selecting the datapoints that are either going to be plotted, or lie between datapoints that are going to be plotted
+### (i.e. all datapoints after 0 seconds) and take the length of this selection (i.e. the number of datapoints)
+### and divide it by 29
+Num_frames = int(len(Z_score_events_lst[0][Index_for_start_recording[0]:]) / 29)
 
 ### Setting start and end x_val (time) points for the plot.
 ### These will be updated in the animate function.
-Start = Extraction_range[0] -5
-End = Extraction_range[0] -5 + 10   
-
+Start = -5
+End = 5 
 
 ### Creating list2D objects for plotting traces
 ### The reason this is done in a for loop
@@ -625,11 +651,12 @@ for i in range(len(Sensor_names_no_duplicates)):
     ### The list is inserted and then flattened using np.ravel.
     x_val_start = [Timevectors_for_behavioral_events_lst[i][:Index_start]]
     x_val_start_flattened = list(np.ravel(x_val_start))
+
     y_val_start = [Z_score_events_lst[i][:Index_start]]
     y_val_start_flattened = list(np.ravel(y_val_start))
 
     ### This selects the x_values and y_values that
-    ### occurs after the Start time (5 seconds)
+    ### occurs after the Start time (0 seconds)
     ### and are thus the values that will be progressively
     ### plotted in the animation. 
     x_values_to_plot = Timevectors_for_behavioral_events_lst[i][Index_start:]
@@ -650,7 +677,7 @@ def init():
         artist_lst[i].set_data(x_values_for_animation_lst[i], y_values_for_animation_lst[i])
         
     return artist_lst
-
+ 
 ### This is the function that will be used to plot each frame 
 def animate(i):
     
@@ -660,12 +687,12 @@ def animate(i):
     ### Firstly, we append new values to the x/y_values_for_animation_lst  and
     ### lists. To limit frames and save time
     ### required to plot the animation, we will only plot
-    ### the 51th data points, hence we index the plotting lsts
-    ### with i*51 
+    ### the 29th data points, hence we index the plotting lsts
+    ### with i*29
     for j in range(len(Sensor_names_no_duplicates)):
             
-        x_values_for_animation_lst[j].append(x_values_to_plot_lst[j][i*51])
-        y_values_for_animation_lst[j].append(y_values_to_plot_lst[j][i*51]) 
+        x_values_for_animation_lst[j].append(x_values_to_plot_lst[j][i*29])
+        y_values_for_animation_lst[j].append(y_values_to_plot_lst[j][i*29]) 
 
         artist_lst[j].set_data(x_values_for_animation_lst[j], y_values_for_animation_lst[j])
     
@@ -678,7 +705,7 @@ def animate(i):
         ### This time-diff is equal to the difference in time
         ### between the plotted y-value in the current frame
         ### and the plotted y-value in the previous frame.
-        Time_diff = x_values_to_plot[i*51] - x_values_to_plot[(i-1)*51]
+        Time_diff = x_values_to_plot[i*29] - x_values_to_plot[(i-1)*29]
         Start +=  Time_diff
         End   +=  Time_diff
 
@@ -690,6 +717,6 @@ def animate(i):
 ### Creating the animation
 anim = FuncAnimation(fig, func=animate, frames=int(Num_frames), init_func = init, blit=True)
 ### Setting parameters for the ffmpeg writer
-FFwriter=animation.FFMpegWriter(fps=int(Num_frames/abs(Extraction_range[1]-(Extraction_range[0]))))
+FFwriter=animation.FFMpegWriter(fps=int(Num_frames/Duration))
 ### Saving animation
 anim.save(Path_for_exporting_video, writer=FFwriter, dpi = 200)
