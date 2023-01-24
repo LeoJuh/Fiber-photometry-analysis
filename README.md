@@ -5,4 +5,6 @@ Guides:
 
 - [Installation guide for repo using pip](https://www.youtube.com/channel/UCojU2f3z4_5d-jA-NTxQS-Q)
 
+- [Installation guide for repo using anaconda](https://www.youtube.com/watch?v=IJxzP_HgnjU)
+
 
