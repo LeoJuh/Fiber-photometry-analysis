@@ -1,0 +1,62 @@
+Instructions for using Movie_making.py to create animations of calcium data aquired using fiberphotometry
+
+Required files for analysis:
+
+- A folder containing tdt files from one recording.
+
+- An ffmpeg.exe file. This is already provided in the github repo,
+  and if you run the Movie_making.py file from its original folder,
+  the script will find the ffmpeg.exe file by itself.  
+
+
+Here the input options will be described.
+
+Maneuvering the first GUI:
+
+- Upon executing the python code, if all required python packages are installed, the GUI will appeer. The gui contains multiple input rows. 
+
+
+	1. The first input row consist of a button which says "Click here to import subject PATH". When you click it, you will 
+	   be able to browse and select your subject folder (NOT experiment folder), which will provide the script with the path to the subject recording which 
+	   will then be used to generate the animation. This input is required and the code will otherwise raise 
+           an error. 
+
+	2. The second input row contains one field with the corresponding text: "Enter start time of animation:". In this field you will input the 
+	   start time of the animation. 
+
+	3. The third input row contains one field with the corresponding text: "Enter duration of animation:". If you want the animation to be
+           for example 20 seconds, you input that into the field. 
+
+	   So if you want to have a animation from the time range 30-40 seconds of the video, you first enter 30 into the "Enter start time of animation" field and then 
+	   enter 10 into the "Enter duration of animation" field. 
+
+	4. The fourth input row contains two fields with the corresponding text: "Enter baseline time range:", which will be used for Z-score conversion. 
+	   The input for the time ranges differs a bit from the fiber photometry analysis code. In this script, the acceptable time range is between 0 to the inputted duration, where 0 represents the start of the video.
+	   So if you have set the duration to 20, the max baseline time range is 0-20s. 
+
+	   So in this code, zero does not represent time of behavioral event, but rather onset of video. So if you have a behavioral event at 11 seconds, in your video 
+ 	   with a duration of 20 seconds, and you want the 5 seconds before the event to be used as time range for Z-score conversion, then you would input 6-11 into the baseline entry fields. 
+
+	5. The fifth input contains a field with the corresponding text: "Enter title for video". The inputted text will be used as title for the animation. 
+	   If you leave this blank, the animation will be made without a title.
+
+
+Maneuvering the second GUI:
+
+- If you have provided the GUI with subject tdt files which were recorded using two different sensor types (i.e., two different fibers), 
+  a second option will appear which will provide two checkboxes with the sensor type names in front of the checkboxes. You need to fill in atleast one of these checkboxes.
+  By clicking the checkboxes you tell the script to plot the trace of the selected sensor in the animation. You can select both checkboxes, which will tell the script to plot
+  the traces of both the sensors in the animation plot. 
+
+  If you select both sensors, then there will appear two rows with the texts "Enter legend names for Sensor X". If you fill in these entry fields,
+  the inputted text will be plotted as legend names in the animation.
+
+Output:
+
+The script will output an mp4 file and be named "{Parent folder of subject folder}, {subject folder} animation.mp4", it will be outputted in the parent folder
+of the subject folder you inputted to the script.
+
+ 
+		 
+
+	 
