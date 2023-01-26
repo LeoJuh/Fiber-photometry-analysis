@@ -594,13 +594,14 @@ for i in range(len(Sensor_names_no_duplicates)):
 
 ### If there are two selected sensors and both the entry boxes are filled in,
 ### then we will set them as legend names. 
-if (len(Sensor_names_no_duplicates) == 2) & (len(legend_names[0]) > 0) & (len(legend_names[1]) > 0):
+if (len(Sensor_names_no_duplicates) == 2): 
+    if (len(legend_names[0]) > 0) & (len(legend_names[1]) > 0):
 
-    axes.legend(artist_lst, 
-                legend_names,
-                frameon=False, 
-                fontsize=15, 
-                loc="upper right")
+        axes.legend(artist_lst, 
+                    legend_names,
+                    frameon=False, 
+                    fontsize=15, 
+                    loc="upper right")
      
 ### Changing settings for matplotlib animation plot.
 axes.spines["right"].set_visible(False)
