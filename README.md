@@ -11,7 +11,7 @@ The ffmpeg.exe file is used for generating the animation, and if it is not place
 Movie_making.py script, the script won´t be able to find it. 
 
 In the "Fiber photometry analysis" folder, there is a python script called "Fiber photometry analysis" which can be used
-to visualize whole recording calcium or to perform peri analysis. In the folder there is also a txt file and a jpg
+to visualize whole recording calcium signals or to perform peri event analysis. In the folder there is also a txt file and a jpg
 file. The txt is describing the some of required inputs (and some advice on which parameters to use) and the output of the script.
 The jpg file contains an image showing the workflow of the analysis. 
 
